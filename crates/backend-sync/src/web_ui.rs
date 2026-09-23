@@ -10,24 +10,25 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
   <style>
     :root {
       --bg: #ffffff;
-      --bg-sidebar: #f8fafc;
-      --bg-subtle: #f1f5f9;
-      --bg-hover: #e2e8f0;
-      --bg-active: #cbd5e1;
-      --border: #e2e8f0;
-      --border-strong: #cbd5e1;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --text-subtle: #94a3b8;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
-      --accent-light: #eff6ff;
-      --accent-border: #bfdbfe;
-      --danger: #dc2626;
+      --bg-sidebar: #fafafa;
+      --bg-subtle: #f5f5f5;
+      --bg-hover: #f0f0f0;
+      --bg-active: #e5e5e5;
+      --bg-card: #ffffff;
+      --border: #e5e5e5;
+      --border-strong: #d4d4d4;
+      --text: #111111;
+      --text-muted: #666666;
+      --text-subtle: #8e8e93;
+      --accent: #ff6363;
+      --accent-hover: #e04343;
+      --accent-light: rgba(255, 99, 99, 0.08);
+      --accent-border: rgba(255, 99, 99, 0.25);
+      --danger: #ef4444;
       --danger-light: #fef2f2;
-      --success: #16a34a;
+      --success: #10b981;
       --success-light: #f0fdf4;
-      --warning: #d97706;
+      --warning: #f59e0b;
       --warning-light: #fffbeb;
       --font-ui: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-serif: "Nanum Myeongjo", "Noto Serif KR", "KoPub Batang", Georgia, serif;
@@ -89,7 +90,9 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       align-items: center;
       justify-content: space-between;
       padding: 0 16px;
-      background: var(--bg);
+      background: rgba(255, 255, 255, 0.90);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       z-index: 20;
       flex-shrink: 0;
       transition: all 0.2s ease;
@@ -351,6 +354,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       gap: 6px;
       padding: 6px 8px;
       border-radius: 6px;
+      border: 1px solid transparent;
       cursor: pointer;
       font-size: 13px;
       transition: background 0.12s ease, border-color 0.12s ease;
@@ -362,8 +366,11 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     .tree-item.active {
-      background: var(--bg-active);
+      background: var(--bg-hover);
+      border: 1px solid var(--border-strong);
+      color: var(--text);
       font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
     .tree-item.folder {
@@ -408,24 +415,25 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     .status-pill-badge.status-초고 {
       background: var(--bg-subtle);
       color: var(--text-muted);
+      border: 1px solid var(--border);
     }
 
     .status-pill-badge.status-수정중 {
       background: var(--warning-light);
       color: var(--warning);
-      border-color: rgba(217, 119, 6, 0.25);
+      border: 1px solid rgba(245, 158, 11, 0.3);
     }
 
     .status-pill-badge.status-퇴고완료 {
       background: var(--success-light);
       color: var(--success);
-      border-color: rgba(22, 163, 74, 0.25);
+      border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
     .status-pill-badge.status-탈고 {
       background: var(--accent-light);
       color: var(--accent);
-      border-color: rgba(37, 99, 235, 0.25);
+      border: 1px solid var(--accent-border);
     }
 
     .tree-item-count {
@@ -549,7 +557,9 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     .word-count-bar {
       padding: 7px 24px;
       border-bottom: 1px solid var(--border);
-      background: var(--bg-sidebar);
+      background: rgba(250, 250, 250, 0.90);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       display: flex;
       align-items: center;
       justify-content: space-between;
