@@ -1,0 +1,5 @@
+/target
+**/*.rs.bk
+*.narr-wal
+*.narr-shm
+.DS_Store

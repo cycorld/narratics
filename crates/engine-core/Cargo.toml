@@ -1,0 +1,18 @@
+[package]
+name = "narratics-engine-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Charles Choi <cycorld@martian.link>", "Hermes Agent"]
+license = "MIT"
+description = "High-performance Local-First Novel & Worldbuilding CRDT Engine"
+
+[dependencies]
+yrs = { version = "0.28.0", features = ["sync"] }
+rusqlite = { version = "0.31", features = ["bundled", "blob"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+
+[dev-dependencies]
+tempfile = "3.10"
+rand = "0.8"
