@@ -1,0 +1,21 @@
+[package]
+name = "narratics-backend-sync"
+version = "0.1.0"
+edition = "2021"
+authors = ["Charles Choi <cycorld@martian.link>", "Hermes Agent"]
+license = "MIT"
+description = "High-performance WebSocket Sync Hub & Web Host for Narratics"
+
+[dependencies]
+narratics-engine-core = { path = "../engine-core" }
+axum = { version = "0.8", features = ["ws"] }
+tokio = { version = "1.38", features = ["full"] }
+tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.6", features = ["cors", "fs", "trace"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+futures = "0.3"
+base64 = "0.22"
+tempfile = "3.10"

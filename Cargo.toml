@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/engine-core",
+    "crates/backend-sync",
 ]
 
 [workspace.package]
