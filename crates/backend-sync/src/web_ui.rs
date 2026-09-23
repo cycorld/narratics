@@ -1,5 +1,5 @@
 pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -38,26 +38,27 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     [data-theme="dark"] {
-      --bg: #121214;
-      --bg-sidebar: #18181b;
-      --bg-subtle: #202024;
-      --bg-hover: #27272a;
-      --bg-active: #323238;
-      --border: #27272a;
-      --border-strong: #3f3f46;
-      --text: #f4f4f5;
-      --text-muted: #a1a1aa;
-      --text-subtle: #71717a;
-      --accent: #3b82f6;
-      --accent-hover: #60a5fa;
-      --accent-light: #172554;
-      --accent-border: #1e3a8a;
+      --bg: #0b0c0e;
+      --bg-sidebar: #111215;
+      --bg-subtle: rgba(255, 255, 255, 0.035);
+      --bg-hover: rgba(255, 255, 255, 0.065);
+      --bg-active: rgba(255, 255, 255, 0.10);
+      --bg-card: #15161a;
+      --border: rgba(255, 255, 255, 0.075);
+      --border-strong: rgba(255, 255, 255, 0.15);
+      --text: #ededed;
+      --text-muted: #8a8c95;
+      --text-subtle: #565861;
+      --accent: #ff6363;
+      --accent-hover: #ff7575;
+      --accent-light: rgba(255, 99, 99, 0.12);
+      --accent-border: rgba(255, 99, 99, 0.28);
       --danger: #ef4444;
-      --danger-light: #450a0a;
-      --success: #22c55e;
-      --success-light: #052e16;
+      --danger-light: rgba(239, 68, 68, 0.15);
+      --success: #10b981;
+      --success-light: rgba(16, 185, 129, 0.15);
       --warning: #f59e0b;
-      --warning-light: #451a03;
+      --warning-light: rgba(245, 158, 11, 0.15);
     }
 
     * {
@@ -310,6 +311,9 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     .binder-search-wrap {
       padding: 8px 12px;
       border-bottom: 1px solid var(--border);
+      position: relative;
+      display: flex;
+      align-items: center;
     }
 
     .binder-search-input {
@@ -1031,6 +1035,280 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       flex-shrink: 0;
     }
 
+    /* Raycast Signature kbd badge */
+    kbd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
+      display: inline-flex;
+      align-items: center;
+      line-height: 1.3;
+      user-select: none;
+    }
+
+    [data-theme="dark"] kbd {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      color: #9da0aa;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    /* Raycast Dark Theme Elevated Surfaces & Glass */
+    [data-theme="dark"] header.topbar {
+      background: rgba(11, 12, 14, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    [data-theme="dark"] .word-count-bar {
+      background: rgba(17, 18, 21, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    [data-theme="dark"] aside.binder-panel,
+    [data-theme="dark"] aside.inspector-panel {
+      background: #111215;
+      border-color: rgba(255, 255, 255, 0.07);
+    }
+
+    [data-theme="dark"] .binder-header,
+    [data-theme="dark"] .binder-search-wrap,
+    [data-theme="dark"] .binder-footer,
+    [data-theme="dark"] .studio-header,
+    [data-theme="dark"] .tab-nav {
+      border-color: rgba(255, 255, 255, 0.07);
+      background: transparent;
+    }
+
+    [data-theme="dark"] .tree-item {
+      color: #b0b2ba;
+      border: 1px solid transparent;
+    }
+
+    [data-theme="dark"] .tree-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #ededed;
+    }
+
+    [data-theme="dark"] .tree-item.active {
+      background: rgba(255, 255, 255, 0.085);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    [data-theme="dark"] .tree-item.folder {
+      color: #ededed;
+    }
+
+    /* Raycast Pill Badges */
+    [data-theme="dark"] .status-pill-badge.status-초고 {
+      background: rgba(255, 255, 255, 0.06);
+      color: #8a8c95;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    [data-theme="dark"] .status-pill-badge.status-수정중 {
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.28);
+    }
+
+    [data-theme="dark"] .status-pill-badge.status-퇴고완료 {
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.28);
+    }
+
+    [data-theme="dark"] .status-pill-badge.status-탈고 {
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      border: 1px solid rgba(99, 102, 241, 0.32);
+    }
+
+    /* Raycast Cards */
+    [data-theme="dark"] .lore-card,
+    [data-theme="dark"] .snapshot-card {
+      background: #15161a;
+      border: 1px solid rgba(255, 255, 255, 0.075);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    [data-theme="dark"] .lore-card:hover,
+    [data-theme="dark"] .snapshot-card:hover {
+      background: #1a1b21;
+      border-color: rgba(255, 255, 255, 0.16);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Raycast Buttons */
+    [data-theme="dark"] button.btn {
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.085);
+      color: #ededed;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="dark"] button.btn:hover {
+      background: rgba(255, 255, 255, 0.085);
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    [data-theme="dark"] button.btn-primary {
+      background: #ff6363;
+      border-color: #ff6363;
+      color: #ffffff;
+      box-shadow: 0 1px 4px rgba(255, 99, 99, 0.35);
+    }
+
+    [data-theme="dark"] button.btn-primary:hover {
+      background: #ff7575;
+      border-color: #ff7575;
+      box-shadow: 0 2px 8px rgba(255, 99, 99, 0.45);
+    }
+
+    [data-theme="dark"] button.btn-active {
+      background: rgba(255, 99, 99, 0.15);
+      border-color: rgba(255, 99, 99, 0.32);
+      color: #ff7575;
+    }
+
+    [data-theme="dark"] .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.1);
+      color: #ededed;
+    }
+
+    /* Raycast Search Inputs */
+    [data-theme="dark"] .binder-search-input,
+    [data-theme="dark"] #lore-search-input,
+    [data-theme="dark"] .form-group input,
+    [data-theme="dark"] .form-group textarea,
+    [data-theme="dark"] .form-group select,
+    [data-theme="dark"] #split-reference-select {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #ededed;
+    }
+
+    [data-theme="dark"] .binder-search-input:focus,
+    [data-theme="dark"] #lore-search-input:focus,
+    [data-theme="dark"] .form-group input:focus,
+    [data-theme="dark"] .form-group textarea:focus,
+    [data-theme="dark"] .form-group select:focus {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 99, 99, 0.45);
+      box-shadow: 0 0 0 2px rgba(255, 99, 99, 0.15);
+    }
+
+    /* Raycast Tabs */
+    [data-theme="dark"] .tab-btn.active {
+      color: #ff7575;
+      border-bottom-color: #ff6363;
+      background: transparent;
+    }
+
+    [data-theme="dark"] .filter-chip {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.08);
+      color: #8a8c95;
+    }
+
+    [data-theme="dark"] .filter-chip.active {
+      background: rgba(255, 99, 99, 0.15);
+      border-color: rgba(255, 99, 99, 0.32);
+      color: #ff7575;
+    }
+
+    /* Raycast Modals and Popups */
+    [data-theme="dark"] .modal-overlay {
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    [data-theme="dark"] .modal-box,
+    [data-theme="dark"] .mention-popup,
+    [data-theme="dark"] .typo-dropdown-menu {
+      background: #141519;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    [data-theme="dark"] .typo-btn-group {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    [data-theme="dark"] .typo-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+
+    /* Raycast Manuscript & Typing Canvas */
+    [data-theme="dark"] textarea.manuscript-editor {
+      color: #e4e5ea;
+      caret-color: #ff6363;
+    }
+
+    [data-theme="dark"] textarea.manuscript-editor::selection {
+      background: rgba(255, 99, 99, 0.32);
+    }
+
+    [data-theme="dark"] .scrivenings-content {
+      color: #e4e5ea;
+    }
+
+    [data-theme="dark"] .status-select-wrap select {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: #ededed;
+    }
+
+    [data-theme="dark"] .scene-title-input:hover,
+    [data-theme="dark"] .scene-title-input:focus {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.14);
+    }
+
+    [data-theme="dark"] .target-progress {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Raycast Sleek Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 9999px;
+    }
+    [data-theme="dark"] ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    [data-theme="dark"] #split-reference-content {
+      background: #15161a;
+      border-color: rgba(255, 255, 255, 0.08);
+      color: #e4e5ea;
+    }
+
     /* Zen Focus Mode */
     body.zen-focus-active header.topbar {
       opacity: 0.15;
@@ -1075,6 +1353,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       <button class="btn" id="btn-zen-mode" title="방해 없는 집중 집필 모드 (단축키: Esc 또는 F11)">
         <svg class="icon" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
         <span>집중 집필</span>
+        <kbd>F11</kbd>
       </button>
 
       <!-- Typewriter Mode Toggle -->
@@ -1086,7 +1365,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       <!-- Typography Settings -->
       <button class="btn" id="btn-open-typo-menu" title="서체, 글자 크기, 줄 간격 조절">
         <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        <span>조판 설정</span>
+        <span>조판</span>
       </button>
 
       <!-- Theme Switcher -->
@@ -1098,7 +1377,8 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       <!-- Export Button -->
       <button class="btn btn-primary" id="btn-export-open" title="원고 내보내기 및 출판 규격 조판">
         <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-        <span>원고 내보내기</span>
+        <span>내보내기</span>
+        <kbd style="background:rgba(0,0,0,0.28); border-color:rgba(255,255,255,0.25); color:#ffffff; margin-left:3px;">⌘E</kbd>
       </button>
 
       <!-- Inspector Toggle -->
@@ -1166,6 +1446,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       <!-- Quick Search inside Binder -->
       <div class="binder-search-wrap">
         <input type="text" class="binder-search-input" id="binder-search-input" placeholder="씬 또는 챕터 검색..." />
+        <kbd style="position:absolute; right:20px; pointer-events:none;">/</kbd>
       </div>
 
       <div class="binder-tree" id="binder-tree-container">
@@ -1241,8 +1522,11 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
 
       <!-- Tab 1: LoreDeck -->
       <div class="tab-content active" id="tab-lore">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <input type="text" id="lore-search-input" placeholder="인물·장소·설정 검색..." style="flex:1; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); font-size:12px; margin-right:6px;" />
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <div style="position:relative; flex:1; display:flex; align-items:center;">
+            <input type="text" id="lore-search-input" placeholder="인물·장소·설정 검색..." style="width:100%; padding:6px 28px 6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--text); font-size:12px;" />
+            <kbd style="position:absolute; right:8px; pointer-events:none;">@</kbd>
+          </div>
           <button class="btn btn-primary" id="btn-add-lore" style="padding:5px 9px;">+ 설정</button>
         </div>
 
@@ -2086,12 +2370,17 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       };
     });
 
-    // Theme Switcher
+    // Theme Switcher (Raycast Dark Mode Default)
     const btnThemeToggle = document.getElementById("btn-theme-toggle");
-    let isDark = false;
+    let currentTheme = localStorage.getItem("narratics_theme") || "dark";
+    document.documentElement.setAttribute("data-theme", currentTheme);
+    let isDark = currentTheme === "dark";
+
     btnThemeToggle.addEventListener("click", () => {
       isDark = !isDark;
-      document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+      currentTheme = isDark ? "dark" : "light";
+      document.documentElement.setAttribute("data-theme", currentTheme);
+      localStorage.setItem("narratics_theme", currentTheme);
     });
 
     // Sidebars Toggle
