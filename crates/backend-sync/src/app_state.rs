@@ -1,5 +1,5 @@
 use narratics_engine_core::{
-    container::{LoreRecord, NarrContainer},
+    container::{LoreRecord, NarrContainer, SnapshotRecord},
     text_engine::SceneEngine,
     tree_crdt::{MoveOp, TreeCRDT},
 };
@@ -32,6 +32,16 @@ pub enum WsMessage {
         lore: LoreRecord,
         client_id: String,
     },
+    #[serde(rename = "snapshot_created")]
+    SnapshotCreated {
+        snapshot: SnapshotRecord,
+        client_id: String,
+    },
+    #[serde(rename = "scene_status_updated")]
+    SceneStatusUpdated {
+        scene_id: String,
+        status: String,
+    },
     #[serde(rename = "ping")]
     Ping,
     #[serde(rename = "pong")]
@@ -46,6 +56,7 @@ pub struct BinderItemDto {
     pub title: String,
     pub is_folder: bool,
     pub word_count: usize,
+    pub status: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -54,6 +65,7 @@ pub struct SceneDto {
     pub title: String,
     pub text: String,
     pub word_count: usize,
+    pub status: String,
     pub updated_at: i64,
 }
 
@@ -65,6 +77,7 @@ pub struct ProjectStateSnapshot {
     pub active_scene_id: String,
     pub scenes: HashMap<String, SceneDto>,
     pub lore: Vec<LoreRecord>,
+    pub snapshots: Vec<SnapshotRecord>,
 }
 
 #[derive(Clone)]
@@ -73,6 +86,7 @@ pub struct AppState {
     pub tree: Arc<RwLock<TreeCRDT>>,
     pub scenes: Arc<RwLock<HashMap<String, SceneEngine>>>,
     pub scene_titles: Arc<RwLock<HashMap<String, String>>>,
+    pub scene_statuses: Arc<RwLock<HashMap<String, String>>>,
     pub tx: broadcast::Sender<WsMessage>,
 }
 
@@ -170,6 +184,7 @@ impl AppState {
             tree: Arc::new(RwLock::new(tree)),
             scenes: Arc::new(RwLock::new(scene_engines)),
             scene_titles: Arc::new(RwLock::new(scene_titles)),
+            scene_statuses: Arc::new(RwLock::new(HashMap::new())),
             tx,
         })
     }
@@ -180,6 +195,7 @@ impl AppState {
         let (nodes, _) = tree.materialize();
         let scenes = self.scenes.read().await;
         let titles = self.scene_titles.read().await;
+        let statuses = self.scene_statuses.read().await;
 
         let title = conn.get_meta("title")?.unwrap_or_else(|| "Narratics Novel".to_string());
         let author = conn.get_meta("author")?.unwrap_or_else(|| "Author".to_string());
@@ -197,6 +213,7 @@ impl AppState {
             } else {
                 0
             };
+            let status = statuses.get(id).cloned().unwrap_or_else(|| "초고".to_string());
 
             binder.push(BinderItemDto {
                 id: id.clone(),
@@ -205,6 +222,7 @@ impl AppState {
                 title: node.title.clone(),
                 is_folder,
                 word_count,
+                status,
             });
         }
 
@@ -215,6 +233,7 @@ impl AppState {
             let title = titles.get(id).cloned().unwrap_or_else(|| id.clone());
             let text = engine.get_text();
             let count = engine.char_count();
+            let status = statuses.get(id).cloned().unwrap_or_else(|| "초고".to_string());
             scene_dtos.insert(
                 id.clone(),
                 SceneDto {
@@ -222,12 +241,14 @@ impl AppState {
                     title,
                     text,
                     word_count: count,
+                    status,
                     updated_at: 0,
                 },
             );
         }
 
         let lore = conn.list_lore()?;
+        let snapshots = conn.list_snapshots(None)?;
         let active_scene_id = binder
             .iter()
             .find(|b| !b.is_folder)
@@ -241,6 +262,7 @@ impl AppState {
             active_scene_id,
             scenes: scene_dtos,
             lore,
+            snapshots,
         })
     }
 }

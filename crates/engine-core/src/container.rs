@@ -44,6 +44,16 @@ pub struct LoreRecord {
     pub updated_at: i64,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SnapshotRecord {
+    pub id: String,
+    pub target_id: String,
+    pub label: String,
+    pub content: String,
+    pub word_count: usize,
+    pub created_at: i64,
+}
+
 pub struct NarrContainer {
     conn: Connection,
 }
@@ -358,6 +368,82 @@ impl NarrContainer {
         let mut list = Vec::new();
         for r in rows {
             list.push(r?);
+        }
+        Ok(list)
+    }
+
+    pub fn save_snapshot(&self, snapshot: &SnapshotRecord) -> Result<(), ContainerError> {
+        let now = if snapshot.created_at > 0 {
+            snapshot.created_at
+        } else {
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs() as i64
+        };
+
+        self.conn.execute(
+            r#"
+            INSERT INTO snapshots (id, target_id, label, blob, created_at)
+            VALUES (?1, ?2, ?3, ?4, ?5)
+            ON CONFLICT(id) DO UPDATE SET
+                label = ?3,
+                blob = ?4,
+                created_at = ?5
+            "#,
+            params![
+                snapshot.id,
+                snapshot.target_id,
+                snapshot.label,
+                snapshot.content.as_bytes(),
+                now
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn list_snapshots(&self, target_id: Option<&str>) -> Result<Vec<SnapshotRecord>, ContainerError> {
+        let mut list = Vec::new();
+        if let Some(target) = target_id {
+            let mut stmt = self.conn.prepare(
+                "SELECT id, target_id, label, blob, created_at FROM snapshots WHERE target_id = ?1 ORDER BY created_at DESC",
+            )?;
+            let rows = stmt.query_map(params![target], |row| {
+                let bytes: Vec<u8> = row.get(3)?;
+                let content = String::from_utf8_lossy(&bytes).to_string();
+                let word_count = content.chars().count();
+                Ok(SnapshotRecord {
+                    id: row.get(0)?,
+                    target_id: row.get(1)?,
+                    label: row.get(2)?,
+                    content,
+                    word_count,
+                    created_at: row.get(4)?,
+                })
+            })?;
+            for r in rows {
+                list.push(r?);
+            }
+        } else {
+            let mut stmt = self.conn.prepare(
+                "SELECT id, target_id, label, blob, created_at FROM snapshots ORDER BY created_at DESC",
+            )?;
+            let rows = stmt.query_map([], |row| {
+                let bytes: Vec<u8> = row.get(3)?;
+                let content = String::from_utf8_lossy(&bytes).to_string();
+                let word_count = content.chars().count();
+                Ok(SnapshotRecord {
+                    id: row.get(0)?,
+                    target_id: row.get(1)?,
+                    label: row.get(2)?,
+                    content,
+                    word_count,
+                    created_at: row.get(4)?,
+                })
+            })?;
+            for r in rows {
+                list.push(r?);
+            }
         }
         Ok(list)
     }

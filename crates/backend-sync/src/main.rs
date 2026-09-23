@@ -14,7 +14,7 @@ use axum::{
 };
 use futures::{SinkExt, StreamExt};
 use narratics_engine_core::{
-    container::{LoreRecord, NarrContainer},
+    container::{LoreRecord, NarrContainer, SnapshotRecord},
     text_engine::SceneEngine,
 };
 use serde::Deserialize;
@@ -46,8 +46,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .route("/", get(index_handler))
         .route("/api/state", get(state_handler))
         .route("/api/scenes/{id}", get(get_scene_handler).post(post_scene_handler))
+        .route("/api/scenes/{id}/status", post(scene_status_handler))
+        .route("/api/scenes/{id}/restore", post(restore_scene_handler))
         .route("/api/binder/move", post(move_node_handler))
         .route("/api/lore", post(save_lore_handler))
+        .route("/api/snapshots", post(save_snapshot_handler))
         .route("/ws", get(ws_handler))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
@@ -98,17 +101,20 @@ async fn get_scene_handler(
 ) -> Result<Json<SceneDto>, (StatusCode, String)> {
     let scenes = state.scenes.read().await;
     let titles = state.scene_titles.read().await;
+    let statuses = state.scene_statuses.read().await;
 
     if let Some(engine) = scenes.get(&id) {
         let title = titles.get(&id).cloned().unwrap_or_else(|| id.clone());
         let text = engine.get_text();
         let word_count = engine.char_count();
+        let status = statuses.get(&id).cloned().unwrap_or_else(|| "초고".to_string());
 
         Ok(Json(SceneDto {
             id,
             title,
             text,
             word_count,
+            status,
             updated_at: 0,
         }))
     } else {
@@ -233,6 +239,102 @@ async fn save_lore_handler(
     let _ = state.tx.send(WsMessage::LoreUpdate {
         lore,
         client_id: "rest_api".to_string(),
+    });
+
+    Ok(Json(serde_json::json!({ "success": true })))
+}
+
+#[derive(Deserialize)]
+struct StatusPayload {
+    status: String,
+}
+
+async fn scene_status_handler(
+    Path(id): Path<String>,
+    State(state): State<AppState>,
+    Json(payload): Json<StatusPayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    {
+        let mut statuses = state.scene_statuses.write().await;
+        statuses.insert(id.clone(), payload.status.clone());
+    }
+
+    let _ = state.tx.send(WsMessage::SceneStatusUpdated {
+        scene_id: id,
+        status: payload.status,
+    });
+
+    Ok(Json(serde_json::json!({ "success": true })))
+}
+
+async fn save_snapshot_handler(
+    State(state): State<AppState>,
+    Json(snapshot): Json<SnapshotRecord>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    {
+        let conn = state.container.lock().await;
+        if let Err(e) = conn.save_snapshot(&snapshot) {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Failed to save snapshot: {e}"),
+            ));
+        }
+    }
+
+    let _ = state.tx.send(WsMessage::SnapshotCreated {
+        snapshot,
+        client_id: "rest_api".to_string(),
+    });
+
+    Ok(Json(serde_json::json!({ "success": true })))
+}
+
+#[derive(Deserialize)]
+struct RestorePayload {
+    #[serde(alias = "content")]
+    text: String,
+}
+
+async fn restore_scene_handler(
+    Path(id): Path<String>,
+    State(state): State<AppState>,
+    Json(payload): Json<RestorePayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let word_count = payload.text.chars().count();
+
+    // Update memory engine
+    {
+        let mut scenes = state.scenes.write().await;
+        if let Some(engine) = scenes.get_mut(&id) {
+            let current_len = engine.char_count() as u32;
+            if current_len > 0 {
+                engine.delete(0, current_len);
+            }
+            engine.insert(0, &payload.text);
+        } else {
+            let engine = SceneEngine::new(&id);
+            engine.insert(0, &payload.text);
+            scenes.insert(id.clone(), engine);
+        }
+    }
+
+    // Persist to SQLite WAL
+    {
+        let scenes = state.scenes.read().await;
+        if let Some(engine) = scenes.get(&id) {
+            if let Ok(diff) = engine.encode_diff(None) {
+                let conn = state.container.lock().await;
+                let _ = conn.save_scene(&id, &diff, &payload.text, word_count);
+            }
+        }
+    }
+
+    // Broadcast change
+    let _ = state.tx.send(WsMessage::TextUpdate {
+        scene_id: id,
+        text: payload.text,
+        word_count,
+        client_id: "restore".to_string(),
     });
 
     Ok(Json(serde_json::json!({ "success": true })))
