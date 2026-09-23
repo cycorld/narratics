@@ -20,10 +20,10 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       --text: #111111;
       --text-muted: #666666;
       --text-subtle: #8e8e93;
-      --accent: #ff6363;
-      --accent-hover: #e04343;
-      --accent-light: rgba(255, 99, 99, 0.08);
-      --accent-border: rgba(255, 99, 99, 0.25);
+      --accent: #111111;
+      --accent-hover: #262626;
+      --accent-light: #f5f5f5;
+      --accent-border: #e5e5e5;
       --danger: #ef4444;
       --danger-light: #fef2f2;
       --success: #10b981;
@@ -50,10 +50,10 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       --text: #ededed;
       --text-muted: #8a8c95;
       --text-subtle: #565861;
-      --accent: #ff6363;
-      --accent-hover: #ff7575;
-      --accent-light: rgba(255, 99, 99, 0.12);
-      --accent-border: rgba(255, 99, 99, 0.28);
+      --accent: #ffffff;
+      --accent-hover: #e5e5e5;
+      --accent-light: rgba(255, 255, 255, 0.08);
+      --accent-border: rgba(255, 255, 255, 0.18);
       --danger: #ef4444;
       --danger-light: rgba(239, 68, 68, 0.15);
       --success: #10b981;
@@ -180,7 +180,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     .status-dot.saving {
-      background: var(--accent);
+      background: var(--warning);
       animation: pulse 1s infinite;
     }
 
@@ -222,20 +222,22 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     button.btn-primary {
-      background: var(--accent);
+      background: #111111;
       color: #ffffff;
-      border-color: var(--accent);
+      border-color: #111111;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
     }
 
     button.btn-primary:hover {
-      background: var(--accent-hover);
-      border-color: var(--accent-hover);
+      background: #262626;
+      border-color: #262626;
     }
 
     button.btn-active {
-      background: var(--accent-light);
-      border-color: var(--accent-border);
-      color: var(--accent);
+      background: var(--bg-hover);
+      border-color: var(--border-strong);
+      color: var(--text);
       font-weight: 600;
     }
 
@@ -431,9 +433,15 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     .status-pill-badge.status-탈고 {
-      background: var(--accent-light);
-      color: var(--accent);
-      border: 1px solid var(--accent-border);
+      background: #111111;
+      color: #ffffff;
+      border: 1px solid #111111;
+    }
+
+    [data-theme="dark"] .status-pill-badge.status-탈고 {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.28);
     }
 
     .tree-item-count {
@@ -733,8 +741,8 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     .tab-btn.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
+      color: var(--text);
+      border-bottom-color: var(--text);
       background: var(--bg);
     }
 
@@ -777,9 +785,9 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     .filter-chip.active {
-      background: var(--accent-light);
-      border-color: var(--accent-border);
-      color: var(--accent);
+      background: var(--text);
+      border-color: var(--text);
+      color: var(--bg);
       font-weight: 600;
     }
 
@@ -793,7 +801,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     .lore-card:hover {
-      border-color: var(--accent);
+      border-color: var(--border-strong);
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
@@ -908,8 +916,8 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     .mention-item:hover, .mention-item.selected {
-      background: var(--accent-light);
-      color: var(--accent);
+      background: var(--bg-hover);
+      color: var(--text);
       font-weight: 600;
     }
 
@@ -1021,7 +1029,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-      border-color: var(--accent);
+      border-color: var(--border-strong);
     }
 
     .modal-actions {
@@ -1175,22 +1183,23 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     [data-theme="dark"] button.btn-primary {
-      background: #ff6363;
-      border-color: #ff6363;
-      color: #ffffff;
-      box-shadow: 0 1px 4px rgba(255, 99, 99, 0.35);
+      background: #ffffff;
+      border-color: #ffffff;
+      color: #0b0c0e;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     }
 
     [data-theme="dark"] button.btn-primary:hover {
-      background: #ff7575;
-      border-color: #ff7575;
-      box-shadow: 0 2px 8px rgba(255, 99, 99, 0.45);
+      background: #e5e5e5;
+      border-color: #e5e5e5;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
     }
 
     [data-theme="dark"] button.btn-active {
-      background: rgba(255, 99, 99, 0.15);
-      border-color: rgba(255, 99, 99, 0.32);
-      color: #ff7575;
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
     }
 
     [data-theme="dark"] .icon-btn:hover {
@@ -1217,14 +1226,14 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     [data-theme="dark"] .form-group textarea:focus,
     [data-theme="dark"] .form-group select:focus {
       background: rgba(255, 255, 255, 0.07);
-      border-color: rgba(255, 99, 99, 0.45);
-      box-shadow: 0 0 0 2px rgba(255, 99, 99, 0.15);
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
     }
 
     /* Raycast Tabs */
     [data-theme="dark"] .tab-btn.active {
-      color: #ff7575;
-      border-bottom-color: #ff6363;
+      color: #ffffff;
+      border-bottom-color: #ffffff;
       background: transparent;
     }
 
@@ -1235,9 +1244,9 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     [data-theme="dark"] .filter-chip.active {
-      background: rgba(255, 99, 99, 0.15);
-      border-color: rgba(255, 99, 99, 0.32);
-      color: #ff7575;
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.28);
+      color: #ffffff;
     }
 
     /* Raycast Modals and Popups */
@@ -1267,11 +1276,11 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     /* Raycast Manuscript & Typing Canvas */
     [data-theme="dark"] textarea.manuscript-editor {
       color: #e4e5ea;
-      caret-color: #ff6363;
+      caret-color: #ffffff;
     }
 
     [data-theme="dark"] textarea.manuscript-editor::selection {
-      background: rgba(255, 99, 99, 0.32);
+      background: rgba(255, 255, 255, 0.18);
     }
 
     [data-theme="dark"] .scrivenings-content {
