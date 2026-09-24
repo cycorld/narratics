@@ -14,11 +14,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
     let projects_dir = std::env::var("NARRATICS_PROJECTS_DIR")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("/home/cycorld/projects/narratics/data/projects"));
+        .unwrap_or_else(|_| PathBuf::from("data/projects"));
 
     let project_path = std::env::var("NARRATICS_CONTAINER_PATH")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| projects_dir.join("moonlight_chronicles.narr"));
+        .unwrap_or_else(|_| projects_dir.join("narratics.narr"));
 
     info!(
         "Initializing Narratics AppState with projects_dir: {:?}, initial_file: {:?}",

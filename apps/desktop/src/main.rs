@@ -8,9 +8,10 @@ fn main() {
     println!("Architecture: Native Desktop Shell + Rust Engine-Core");
 
     let state = Arc::new(DesktopState::new());
-    let test_path = "/home/cycorld/projects/narratics/workspace.narr";
+    let test_path =
+        std::env::var("NARRATICS_WORKSPACE").unwrap_or_else(|_| "workspace.narr".to_string());
 
-    match open_project(&state, test_path) {
+    match open_project(&state, &test_path) {
         Ok(summary) => {
             println!("✓ Project Loaded: {}", summary.title);
             println!("  Author: {}", summary.author);

@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-and-test:
+    name: Rust Check, Test & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check code formatting
+        run: cargo fmt --all -- --check
+
+      - name: Workspace Cargo Check
+        run: cargo check --workspace
+
+      - name: Run Test Suite & Adversarial Hardening
+        run: cargo test --workspace --verbose

@@ -1,9 +1,10 @@
 [package]
 name = "narratics-desktop"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
 description = "Narratics Native Desktop Application (macOS, Windows, Linux)"
-license = "MIT OR Apache-2.0"
+license = "PolyForm-Noncommercial-1.0.0"
 
 [dependencies]
 narratics-engine-core = { path = "../../crates/engine-core" }

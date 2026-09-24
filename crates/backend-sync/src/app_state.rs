@@ -923,7 +923,8 @@ impl AppState {
 
                 std::fs::write(&in_path, full_typ)?;
 
-                let status = tokio::process::Command::new("/home/cycorld/.linuxbrew/bin/typst")
+                let typst_bin = std::env::var("TYPST_BIN").unwrap_or_else(|_| "typst".to_string());
+                let status = tokio::process::Command::new(typst_bin)
                     .arg("compile")
                     .arg(&in_path)
                     .arg(&out_path)

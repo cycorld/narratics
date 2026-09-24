@@ -1095,7 +1095,7 @@ pub const LANDING_HTML: &str = r##"<!DOCTYPE html>
     <div class="container footer-inner">
       <div>
         <div style="font-weight: 700; color: var(--text); margin-bottom: 4px;">Narratics — Local-First Narrative Studio</div>
-        <div>엔트로피패러독스 주식회사 (Entropy Paradox, Inc.) | Apache-2.0 & MIT License</div>
+        <div>엔트로피패러독스 주식회사 (Entropy Paradox, Inc.) | PolyForm Noncommercial 1.0.0</div>
       </div>
       <ul class="footer-links">
         <li><a href="/app">웹 스튜디오 열기</a></li>

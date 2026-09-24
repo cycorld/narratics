@@ -1,9 +1,9 @@
 [package]
 name = "narratics-engine-core"
-version = "0.1.0"
-edition = "2021"
-authors = ["Charles Choi <cycorld@martian.link>", "Hermes Agent"]
-license = "MIT"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license = "PolyForm-Noncommercial-1.0.0"
 description = "High-performance Local-First Novel & Worldbuilding CRDT Engine"
 
 [dependencies]

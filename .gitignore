@@ -4,3 +4,8 @@
 *.narr-wal
 *.narr-shm
 .DS_Store
+dns_backup*.json
+*backup*.json
+*.env*
+data/
+*.log

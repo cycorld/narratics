@@ -83,7 +83,7 @@ async fn api_releases_handler() -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "version": "0.1.0",
         "date": "2026-09-24",
-        "license": "Apache-2.0 / MIT",
+        "license": "PolyForm-Noncommercial-1.0.0",
         "platforms": {
             "windows": {
                 "filename": "Narratics-Setup-0.1.0.exe",

@@ -10,5 +10,5 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = ["Charles Choi <cycorld@martian.link>", "Hermes Agent"]
-license = "MIT"
+authors = ["Charles Choi <cycorld@martian.link>", "Narratics Contributors"]
+license = "PolyForm-Noncommercial-1.0.0"

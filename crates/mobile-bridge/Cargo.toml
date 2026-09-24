@@ -1,9 +1,10 @@
 [package]
 name = "narratics-mobile-bridge"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
 description = "Native Mobile Core Engine Bridge for iOS (Swift) & Android (Kotlin/JNI)"
-license = "MIT OR Apache-2.0"
+license = "PolyForm-Noncommercial-1.0.0"
 
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]
