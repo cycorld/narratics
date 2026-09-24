@@ -91,7 +91,7 @@ pub struct ProjectStateSnapshot {
     pub snapshots: Vec<SnapshotRecord>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CreateProjectReq {
     pub title: String,
     pub author: Option<String>,
@@ -101,7 +101,7 @@ pub struct CreateProjectReq {
     pub template: Option<String>, // "blank" | "three_act" | "webnovel"
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UpdateProjectMetaReq {
     pub title: Option<String>,
     pub author: Option<String>,
@@ -906,7 +906,7 @@ impl AppState {
         }
 
         match format {
-            "txt" => {
+            "txt" | "text" => {
                 let filename = format!("{}.txt", safe_title);
                 Ok((filename, "text/plain; charset=utf-8".to_string(), txt_content.into_bytes()))
             }

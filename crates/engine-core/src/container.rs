@@ -47,10 +47,14 @@ pub struct LoreRecord {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SnapshotRecord {
     pub id: String,
+    #[serde(alias = "scene_id")]
     pub target_id: String,
     pub label: String,
+    #[serde(alias = "content_diff", alias = "text")]
     pub content: String,
+    #[serde(default)]
     pub word_count: usize,
+    #[serde(default)]
     pub created_at: i64,
 }
 

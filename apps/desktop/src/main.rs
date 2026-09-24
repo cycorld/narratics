@@ -56,6 +56,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::commands::move_node;
 
     #[test]
     fn test_desktop_state_and_commands() {
