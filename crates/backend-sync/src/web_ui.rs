@@ -1,4 +1,4 @@
-pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
+pub const INDEX_HTML: &str = r###"<!DOCTYPE html>
 <html lang="ko" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
@@ -951,9 +951,27 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     .mention-item:hover, .mention-item.selected {
-      background: var(--bg-hover);
-      color: var(--text);
+      background: var(--text) !important;
+      color: var(--bg) !important;
       font-weight: 600;
+    }
+
+    .mention-item:hover .mention-cat, .mention-item.selected .mention-cat {
+      color: var(--bg) !important;
+      opacity: 0.85;
+    }
+
+    /* Drag & Drop Visuals for Binder */
+    .binder-folder-wrap.drag-over > .tree-item.folder {
+      outline: 2px dashed var(--text);
+      background: var(--bg-hover);
+    }
+    .tree-item.dragging {
+      opacity: 0.45;
+    }
+    .index-card.active-scene-card {
+      border-color: var(--text);
+      box-shadow: 0 0 0 1px var(--text);
     }
 
     .mention-cat {
@@ -2151,6 +2169,11 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
               <option value="탈고">탈고 (Final)</option>
             </select>
           </div>
+          <div class="status-select-wrap" style="min-width: 140px;">
+            <select id="current-scene-parent-select" title="소속 장 (챕터) 변경 및 이동">
+              <option value="root">소속 장 선택...</option>
+            </select>
+          </div>
         </div>
         <div class="studio-controls">
           <div class="view-mode-group">
@@ -2220,7 +2243,13 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
         <!-- Corkboard Grid View -->
         <div id="corkboard-container" class="corkboard-container" style="display:none;">
           <div class="corkboard-toolbar">
-            <div class="corkboard-title" id="corkboard-folder-title">현재 챕터 개요 매트릭스 (코르크보드)</div>
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div class="corkboard-title" id="corkboard-folder-title">개요 매트릭스 (코르크보드)</div>
+              <select id="corkboard-folder-select" class="canvas-split-select" style="min-width: 180px; padding: 4px 8px; font-size: 12px;">
+                <option value="current">현재 선택된 장</option>
+                <option value="all">작품 전체 (모든 씬)</option>
+              </select>
+            </div>
             <button class="btn btn-sm btn-primary" id="btn-corkboard-add-scene">+ 새 씬 카드</button>
           </div>
           <div class="corkboard-grid" id="corkboard-grid"></div>
@@ -2481,6 +2510,24 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       <div class="modal-actions">
         <button class="btn" id="btn-close-rename-node">취소</button>
         <button class="btn btn-primary" id="btn-save-rename-node">변경 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Moving Scene to Another Chapter -->
+  <div class="modal-overlay" id="modal-reparent-node">
+    <div class="modal-box" style="width: 440px;">
+      <div class="modal-title">다른 장(챕터)으로 씬 이동</div>
+      <input type="hidden" id="reparent-node-id" />
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;" id="reparent-scene-title-label">이동할 씬: -</p>
+      <div class="form-group">
+        <label>이동 대상 장 선택</label>
+        <select id="reparent-target-select" class="form-control" style="width:100%; padding:8px; border-radius:6px; background:var(--bg); color:var(--text); border:1px solid var(--border);">
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="btn-close-reparent-node">취소</button>
+        <button class="btn btn-primary" id="btn-confirm-reparent-node">이동 완료</button>
       </div>
     </div>
   </div>
@@ -2826,8 +2873,35 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
             deleteNode(folder.id, folder.title);
             return;
           }
+          
+          state.active_folder_id = folder.id;
+          if (childScenes.length > 0) {
+            selectScene(childScenes[0].id);
+          } else {
+            renderBinder(document.getElementById("binder-search-input").value);
+            if (viewMode === "corkboard") renderCorkboard();
+          }
           folderHeader.classList.toggle("collapsed");
           childContainer.style.display = folderHeader.classList.contains("collapsed") ? "none" : "block";
+        };
+
+        // Drag & Drop onto Folder
+        folderWrap.ondragover = (e) => {
+          e.preventDefault();
+          folderWrap.classList.add("drag-over");
+        };
+        folderWrap.ondragleave = (e) => {
+          if (!folderWrap.contains(e.relatedTarget)) {
+            folderWrap.classList.remove("drag-over");
+          }
+        };
+        folderWrap.ondrop = async (e) => {
+          e.preventDefault();
+          folderWrap.classList.remove("drag-over");
+          const draggedSceneId = e.dataTransfer.getData("text/plain");
+          if (draggedSceneId && draggedSceneId !== folder.id) {
+            await moveSceneToChapter(draggedSceneId, folder.id);
+          }
         };
 
         folderWrap.appendChild(folderHeader);
@@ -2842,6 +2916,15 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
           const status = scene.status || "초고";
           const sceneDiv = document.createElement("div");
           sceneDiv.className = `tree-item depth-1 ${isActive ? "active" : ""}`;
+          sceneDiv.draggable = true;
+          sceneDiv.ondragstart = (e) => {
+            e.dataTransfer.setData("text/plain", scene.id);
+            sceneDiv.classList.add("dragging");
+          };
+          sceneDiv.ondragend = () => {
+            sceneDiv.classList.remove("dragging");
+          };
+
           sceneDiv.innerHTML = `
             <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
             <span class="tree-item-title">${escapeHtml(scene.title)}</span>
@@ -2850,6 +2933,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
             <div class="tree-item-tools">
               <button class="tree-item-btn btn-node-up" title="위로 이동">▲</button>
               <button class="tree-item-btn btn-node-down" title="아래로 이동">▼</button>
+              <button class="tree-item-btn btn-node-reparent" title="다른 장으로 이동">⇄</button>
               <button class="tree-item-btn btn-node-rename" title="이름 변경">✎</button>
               <button class="tree-item-btn danger btn-node-delete" title="씬 삭제">✕</button>
             </div>
@@ -2868,6 +2952,11 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
             if (e.target.closest(".btn-node-down")) {
               e.stopPropagation();
               reorderNode(scene.id, "down");
+              return;
+            }
+            if (e.target.closest(".btn-node-reparent")) {
+              e.stopPropagation();
+              openReparentModal(scene.id, scene.title, scene.parent);
               return;
             }
             if (e.target.closest(".btn-node-rename")) {
@@ -2901,6 +2990,15 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
         const status = scene.status || "초고";
         const sceneDiv = document.createElement("div");
         sceneDiv.className = `tree-item ${isActive ? "active" : ""}`;
+        sceneDiv.draggable = true;
+        sceneDiv.ondragstart = (e) => {
+          e.dataTransfer.setData("text/plain", scene.id);
+          sceneDiv.classList.add("dragging");
+        };
+        sceneDiv.ondragend = () => {
+          sceneDiv.classList.remove("dragging");
+        };
+
         sceneDiv.innerHTML = `
           <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
           <span class="tree-item-title">${escapeHtml(scene.title)}</span>
@@ -2909,6 +3007,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
           <div class="tree-item-tools">
             <button class="tree-item-btn btn-node-up" title="위로 이동">▲</button>
             <button class="tree-item-btn btn-node-down" title="아래로 이동">▼</button>
+            <button class="tree-item-btn btn-node-reparent" title="다른 장으로 이동">⇄</button>
             <button class="tree-item-btn btn-node-rename" title="이름 변경">✎</button>
             <button class="tree-item-btn danger btn-node-delete" title="씬 삭제">✕</button>
           </div>
@@ -2926,6 +3025,11 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
           if (e.target.closest(".btn-node-down")) {
             e.stopPropagation();
             reorderNode(scene.id, "down");
+            return;
+          }
+          if (e.target.closest(".btn-node-reparent")) {
+            e.stopPropagation();
+            openReparentModal(scene.id, scene.title, scene.parent);
             return;
           }
           if (e.target.closest(".btn-node-rename")) {
@@ -2969,10 +3073,20 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     });
 
     function selectScene(sceneId) {
-      if (state.active_scene_id === sceneId) return;
+      if (state.active_scene_id === sceneId) {
+        if (viewMode === "corkboard") renderCorkboard();
+        return;
+      }
       state.active_scene_id = sceneId;
+      const cur = state.binder.find(b => b.id === sceneId);
+      if (cur && cur.parent && cur.parent !== "root") {
+        state.active_folder_id = cur.parent;
+      }
       renderBinder(document.getElementById("binder-search-input").value);
       loadActiveScene();
+      if (viewMode === "corkboard") {
+        renderCorkboard();
+      }
     }
 
     function loadActiveScene() {
@@ -2987,8 +3101,10 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
         return;
       }
 
-      sceneTitleInput.value = scene.title;
-      sceneStatusSelect.value = scene.status || "초고";
+      const binderItem = state.binder.find(b => b.id === state.active_scene_id);
+      sceneTitleInput.value = (binderItem && binderItem.title) || scene.title;
+      sceneStatusSelect.value = (binderItem && binderItem.status) || scene.status || "초고";
+      updateSceneParentSelect(binderItem ? (binderItem.parent || "root") : "root");
       editorTextarea.value = scene.text || "";
       updateWordCount(scene.text || "");
 
@@ -3181,27 +3297,40 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       }
     }
 
-    // @-Mention Autocomplete Handling
+    // @-Mention Autocomplete Handling & Keyboard Navigation
+    let currentMentionMatches = [];
+    let mentionSelectedIndex = 0;
+    let currentMentionStartPos = -1;
+    let currentMentionEndPos = -1;
+
     function handleMentionTrigger(e) {
       const pos = editorTextarea.selectionStart;
       const text = editorTextarea.value;
       const lastAt = text.lastIndexOf("@", pos - 1);
 
       if (lastAt !== -1 && pos - lastAt <= 12) {
-        const query = text.substring(lastAt + 1, pos).toLowerCase();
-        const matches = state.lore.filter(l => 
-          l.name.toLowerCase().includes(query) || (l.aliases && l.aliases.some(a => a.toLowerCase().includes(query)))
-        );
+        const query = text.substring(lastAt + 1, pos);
+        if (!/\s/.test(query)) {
+          const lQuery = query.toLowerCase();
+          const matches = state.lore.filter(l => 
+            l.name.toLowerCase().includes(lQuery) || (l.aliases && l.aliases.some(a => a.toLowerCase().includes(lQuery)))
+          );
 
-        if (matches.length > 0) {
-          showMentionPopup(matches, lastAt, pos);
-          return;
+          if (matches.length > 0) {
+            showMentionPopup(matches, lastAt, pos);
+            return;
+          }
         }
       }
       hideMentionPopup();
     }
 
     function showMentionPopup(matches, startPos, endPos) {
+      currentMentionMatches = matches;
+      mentionSelectedIndex = 0;
+      currentMentionStartPos = startPos;
+      currentMentionEndPos = endPos;
+
       mentionPopup.innerHTML = "";
       matches.slice(0, 6).forEach((item, idx) => {
         const div = document.createElement("div");
@@ -3210,33 +3339,104 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
           <span>${escapeHtml(item.name)}</span>
           <span class="mention-cat">${escapeHtml(item.category)}</span>
         `;
-        div.onclick = () => {
+        div.onmouseenter = () => {
+          mentionSelectedIndex = idx;
+          updateMentionSelection();
+        };
+        div.onclick = (e) => {
+          e.stopPropagation();
           insertMention(item.name, startPos, endPos);
         };
         mentionPopup.appendChild(div);
       });
 
-      // Position near center
-      const editorRect = editorTextarea.getBoundingClientRect();
-      mentionPopup.style.left = `${editorRect.left + 80}px`;
-      mentionPopup.style.top = `${editorRect.top + 120}px`;
+      // Position accurately near the @ character
+      const textarea = editorTextarea;
+      const mirror = getTypewriterMirror(textarea);
+      mirror.textContent = textarea.value.substring(0, startPos);
+      const marker = document.createElement("span");
+      marker.textContent = "@";
+      mirror.appendChild(marker);
+
+      const rect = textarea.getBoundingClientRect();
+      const markerY = marker.offsetTop - textarea.scrollTop;
+      const popupTop = Math.max(10, Math.min(window.innerHeight - 260, rect.top + markerY + 28));
+      const popupLeft = Math.max(20, Math.min(window.innerWidth - 300, rect.left + 40));
+
+      mentionPopup.style.top = `${popupTop}px`;
+      mentionPopup.style.left = `${popupLeft}px`;
       mentionPopup.style.display = "block";
+    }
+
+    function updateMentionSelection() {
+      const items = mentionPopup.querySelectorAll(".mention-item");
+      items.forEach((item, idx) => {
+        const isSel = idx === mentionSelectedIndex;
+        item.classList.toggle("selected", isSel);
+        if (isSel) {
+          item.scrollIntoView({ block: "nearest" });
+        }
+      });
     }
 
     function hideMentionPopup() {
       mentionPopup.style.display = "none";
+      currentMentionMatches = [];
+      mentionSelectedIndex = 0;
     }
 
     function insertMention(name, startPos, endPos) {
       const before = editorTextarea.value.substring(0, startPos);
       const after = editorTextarea.value.substring(endPos);
-      editorTextarea.value = `${before}${name}${after}`;
-      const newCursor = startPos + name.length;
+      const inserted = `@${name} `;
+      editorTextarea.value = `${before}${inserted}${after}`;
+      const newCursor = startPos + inserted.length;
       editorTextarea.setSelectionRange(newCursor, newCursor);
       hideMentionPopup();
       editorTextarea.focus();
       editorTextarea.dispatchEvent(new Event("input"));
     }
+
+    // Keyboard navigation inside textarea for @ mentions
+    editorTextarea.addEventListener("keydown", (e) => {
+      if (mentionPopup.style.display === "block" && currentMentionMatches.length > 0) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          e.stopPropagation();
+          mentionSelectedIndex = (mentionSelectedIndex + 1) % currentMentionMatches.length;
+          updateMentionSelection();
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          e.stopPropagation();
+          mentionSelectedIndex = (mentionSelectedIndex - 1 + currentMentionMatches.length) % currentMentionMatches.length;
+          updateMentionSelection();
+          return;
+        }
+        if (e.key === "Enter" || e.key === "Tab") {
+          e.preventDefault();
+          e.stopPropagation();
+          const chosen = currentMentionMatches[mentionSelectedIndex];
+          if (chosen) {
+            insertMention(chosen.name, currentMentionStartPos, currentMentionEndPos);
+          }
+          return;
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          hideMentionPopup();
+          return;
+        }
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest("#mention-popup") && !e.target.closest("#manuscript-text-editor")) {
+        hideMentionPopup();
+      }
+    });
 
     // Scene Status Dropdown
     sceneStatusSelect.addEventListener("change", async () => {
@@ -3255,6 +3455,119 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
         body: JSON.stringify({ status: newStatus })
       });
     });
+
+    // Scene Parent (Chapter) Dropdown & Reparent Functions
+    const currentSceneParentSelect = document.getElementById("current-scene-parent-select");
+    if (currentSceneParentSelect) {
+      currentSceneParentSelect.addEventListener("change", async () => {
+        const newParent = currentSceneParentSelect.value;
+        const sceneId = state.active_scene_id;
+        if (!sceneId) return;
+        await moveSceneToChapter(sceneId, newParent);
+      });
+    }
+
+    function updateSceneParentSelect(currentParentId) {
+      if (!currentSceneParentSelect) return;
+      currentSceneParentSelect.innerHTML = "";
+
+      const rootOpt = document.createElement("option");
+      rootOpt.value = "root";
+      rootOpt.textContent = "최상위 (장 없음)";
+      currentSceneParentSelect.appendChild(rootOpt);
+
+      const folders = state.binder.filter(b => b.is_folder);
+      folders.forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = f.id;
+        opt.textContent = `📁 ${f.title}`;
+        currentSceneParentSelect.appendChild(opt);
+      });
+
+      currentSceneParentSelect.value = currentParentId || "root";
+    }
+
+    async function moveSceneToChapter(sceneId, newParentId) {
+      const scene = state.binder.find(b => b.id === sceneId);
+      if (!scene) return;
+      const targetFolder = state.binder.find(b => b.id === newParentId && b.is_folder);
+      const targetTitle = targetFolder ? targetFolder.title : "최상위";
+      const siblings = state.binder.filter(b => b.parent === newParentId && !b.is_folder);
+      const newRank = ((siblings.length + 1) * 10).toString();
+
+      scene.parent = newParentId;
+      scene.rank = newRank;
+      state.active_folder_id = newParentId === "root" ? null : newParentId;
+
+      renderBinder(document.getElementById("binder-search-input").value);
+      updateSceneParentSelect(newParentId);
+      if (viewMode === "corkboard") renderCorkboard();
+
+      try {
+        await fetch("/api/binder/move", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            child: scene.id,
+            parent: newParentId,
+            rank: newRank,
+            title: scene.title
+          })
+        });
+        showUndoToast(`'${scene.title}'이(가) [${targetTitle}]으로 이동되었습니다.`, null);
+      } catch (err) {
+        console.error("Failed to move scene:", err);
+      }
+    }
+
+    // Reparent Modal Handlers
+    const modalReparentNode = document.getElementById("modal-reparent-node");
+    const reparentNodeIdInput = document.getElementById("reparent-node-id");
+    const reparentSceneTitleLabel = document.getElementById("reparent-scene-title-label");
+    const reparentTargetSelect = document.getElementById("reparent-target-select");
+    const btnCloseReparentNode = document.getElementById("btn-close-reparent-node");
+    const btnConfirmReparentNode = document.getElementById("btn-confirm-reparent-node");
+
+    function openReparentModal(sceneId, sceneTitle, currentParentId) {
+      if (!modalReparentNode) return;
+      reparentNodeIdInput.value = sceneId;
+      reparentSceneTitleLabel.textContent = `이동할 씬: ${sceneTitle}`;
+      reparentTargetSelect.innerHTML = "";
+
+      const rootOpt = document.createElement("option");
+      rootOpt.value = "root";
+      rootOpt.textContent = "최상위 (장 없음)";
+      reparentTargetSelect.appendChild(rootOpt);
+
+      const folders = state.binder.filter(b => b.is_folder);
+      folders.forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = f.id;
+        opt.textContent = `📁 ${f.title}`;
+        reparentTargetSelect.appendChild(opt);
+      });
+
+      reparentTargetSelect.value = currentParentId || "root";
+      modalReparentNode.classList.add("active");
+      modalReparentNode.style.display = "flex";
+    }
+
+    if (btnCloseReparentNode) {
+      btnCloseReparentNode.onclick = () => {
+        modalReparentNode.classList.remove("active");
+        modalReparentNode.style.display = "none";
+      };
+    }
+
+    if (btnConfirmReparentNode) {
+      btnConfirmReparentNode.onclick = async () => {
+        const sceneId = reparentNodeIdInput.value;
+        const newParentId = reparentTargetSelect.value;
+        modalReparentNode.classList.remove("active");
+        modalReparentNode.style.display = "none";
+        await moveSceneToChapter(sceneId, newParentId);
+      };
+    }
 
     async function cycleSceneStatus(sceneId, currentStatus) {
       const statuses = ["초고", "수정중", "퇴고완료", "탈고"];
@@ -3450,9 +3763,42 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       container.innerHTML = "";
 
       const activeNode = state.binder.find(b => b.id === state.active_scene_id);
-      const activeParent = activeNode ? activeNode.parent : null;
-      const parentFolder = state.binder.find(b => b.id === activeParent && b.is_folder);
+      let targetFolderId = state.active_folder_id;
+      if (!targetFolderId && activeNode) {
+        if (activeNode.is_folder) {
+          targetFolderId = activeNode.id;
+          state.active_folder_id = activeNode.id;
+        } else if (activeNode.parent && activeNode.parent !== "root") {
+          targetFolderId = activeNode.parent;
+          state.active_folder_id = activeNode.parent;
+        }
+      }
 
+      // Populate Corkboard Folder Dropdown
+      const folderSelect = document.getElementById("corkboard-folder-select");
+      if (folderSelect) {
+        folderSelect.innerHTML = `<option value="all">작품 전체 (모든 씬 보기)</option>`;
+        const folders = state.binder.filter(b => b.is_folder);
+        folders.forEach(f => {
+          const count = state.binder.filter(b => b.parent === f.id && !b.is_folder).length;
+          const opt = document.createElement("option");
+          opt.value = f.id;
+          opt.textContent = `📁 ${f.title} (${count}화)`;
+          folderSelect.appendChild(opt);
+        });
+        folderSelect.value = targetFolderId || "all";
+
+        if (!folderSelect.dataset.bound) {
+          folderSelect.dataset.bound = "true";
+          folderSelect.addEventListener("change", () => {
+            const val = folderSelect.value;
+            state.active_folder_id = val === "all" ? null : val;
+            renderCorkboard();
+          });
+        }
+      }
+
+      const parentFolder = state.binder.find(b => b.id === targetFolderId && b.is_folder);
       const folderTitleEl = document.getElementById("corkboard-folder-title");
       if (folderTitleEl) {
         folderTitleEl.textContent = parentFolder ? `${escapeHtml(parentFolder.title)} - 개요 매트릭스` : "작품 전체 씬 개요 매트릭스";
@@ -3461,13 +3807,14 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       const scenes = state.binder.filter(b => !b.is_folder && (parentFolder ? b.parent === parentFolder.id : true));
 
       if (scenes.length === 0) {
-        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: var(--text-muted); font-size:13px;">등록된 씬이 없습니다. [+ 새 씬 카드]를 눌러 추가하세요.</div>`;
+        container.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px; color: var(--text-muted); font-size:13px;">이 장에 등록된 씬이 없습니다. [+ 새 씬 카드]를 눌러 추가하세요.</div>`;
         return;
       }
 
       scenes.forEach((scene) => {
         const card = document.createElement("div");
-        card.className = "index-card";
+        const isCurrentScene = scene.id === state.active_scene_id;
+        card.className = `index-card ${isCurrentScene ? "active-scene-card" : ""}`;
         const sceneData = state.scenes[scene.id] || {};
         const textSnippet = (sceneData.text || "").trim().slice(0, 140) || "(원고 내용 없음)";
         const chars = (sceneData.word_count || scene.word_count || 0).toLocaleString();
@@ -4772,4 +5119,4 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
   </script>
 </body>
 </html>
-"#;
+"###;
