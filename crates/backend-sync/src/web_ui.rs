@@ -1504,6 +1504,133 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       background: var(--bg-hover);
     }
 
+
+    /* Screen styling: hide print container */
+    #print-manuscript-container {
+      display: none;
+    }
+
+    /* Print Stylesheet: Pure Manuscript Formatting */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 25mm 20mm 25mm 20mm;
+      }
+      
+      html, body {
+        background: #ffffff !important;
+        color: #111111 !important;
+        font-family: "Pretendard", "Noto Serif CKR", "Source Han Serif K", serif !important;
+        font-size: 11pt !important;
+        line-height: 1.85 !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Hide ALL UI chrome, modals, sidebars, buttons, panels */
+      body > *:not(#print-manuscript-container),
+      header,
+      aside,
+      main,
+      .workspace-layout,
+      .studio-panel,
+      .studio-header,
+      .word-count-bar,
+      .modal-overlay,
+      .typo-dropdown-menu,
+      .mention-popup,
+      button,
+      .btn,
+      kbd,
+      .tag-chip,
+      .active-lore-pill {
+        display: none !important;
+        visibility: hidden !important;
+      }
+
+      #print-manuscript-container {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .print-title-page {
+        page-break-after: always;
+        text-align: center;
+        padding-top: 25vh;
+        margin-bottom: 40vh;
+      }
+      .print-book-title {
+        font-size: 28pt;
+        font-weight: 800;
+        margin-bottom: 16pt;
+        color: #000000;
+      }
+      .print-book-author {
+        font-size: 15pt;
+        color: #444444;
+        margin-bottom: 24pt;
+      }
+      .print-publisher {
+        font-size: 10pt;
+        color: #888888;
+      }
+
+      .print-synopsis-page {
+        page-break-after: always;
+        padding: 40pt 20pt;
+      }
+      .print-synopsis-header {
+        font-size: 16pt;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 20pt;
+        color: #000000;
+      }
+      .print-synopsis-body {
+        font-size: 11pt;
+        line-height: 1.85;
+        color: #333333;
+        white-space: pre-wrap;
+      }
+
+      .print-chapter {
+        page-break-before: always;
+        margin-top: 30pt;
+      }
+      .print-chapter-title {
+        font-size: 20pt;
+        font-weight: 700;
+        margin-bottom: 20pt;
+        padding-bottom: 10pt;
+        border-bottom: 1.5pt solid #111111;
+        color: #000000;
+      }
+      .print-scene {
+        margin-top: 24pt;
+        margin-bottom: 24pt;
+      }
+      .print-scene-title {
+        font-size: 14pt;
+        font-weight: 600;
+        margin-bottom: 12pt;
+        color: #222222;
+      }
+      .print-scene-body {
+        font-size: 11pt;
+        line-height: 1.85;
+        text-indent: 1.2em;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #111111;
+        text-align: justify;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -2024,9 +2151,12 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
         <div style="border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
           <div>
             <div style="font-weight:600; font-size:13px;">인쇄 및 브라우저 PDF 열기</div>
-            <div style="font-size:11px; color:var(--text-muted);">원고지 양식 및 A4 여백 맞춤 브라우저 인쇄</div>
+            <div style="font-size:11px; color:var(--text-muted);">원고 본문만 출판 규격으로 정돈하여 인쇄하거나 새 탭에서 Typst PDF 열기</div>
           </div>
-          <button class="btn" id="btn-export-print">인쇄 열기</button>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" id="btn-export-print">인쇄 열기</button>
+            <a href="/api/export/pdf" target="_blank" class="btn" style="text-decoration:none;">새 탭 PDF</a>
+          </div>
         </div>
       </div>
 
@@ -2035,6 +2165,9 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       </div>
     </div>
   </div>
+
+  <!-- Hidden Printable Manuscript Container (rendered only during @media print) -->
+  <div id="print-manuscript-container"></div>
 
   <script>
     // App State
@@ -3174,8 +3307,78 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       downloadFile(`${state.title}_출판조판.typ`, fullTyp, "text/plain;charset=utf-8");
     });
 
+    function preparePrintManuscript() {
+      const container = document.getElementById("print-manuscript-container");
+      if (!container) return;
+
+      let html = `
+        <div class="print-title-page">
+          <div class="print-book-title">${escapeHtml(state.title)}</div>
+          <div class="print-book-author">${escapeHtml(state.author || "작자 미상")} 지음</div>
+          <div class="print-publisher">Narratics 서사 집필 스튜디오</div>
+        </div>
+      `;
+
+      if (state.synopsis && state.synopsis.trim()) {
+        html += `
+          <div class="print-synopsis-page">
+            <div class="print-synopsis-header">작품 개요 (Synopsis)</div>
+            <div class="print-synopsis-body">${escapeHtml(state.synopsis)}</div>
+          </div>
+        `;
+      }
+
+      const binder = state.binder || [];
+      const folders = binder.filter(b => b.is_folder);
+      const rootScenes = binder.filter(b => !b.is_folder && (!b.parent_id || b.parent_id === "root"));
+
+      if (folders.length > 0) {
+        folders.forEach(folder => {
+          html += `<div class="print-chapter">`;
+          html += `<div class="print-chapter-title">${escapeHtml(folder.title)}</div>`;
+          const childScenes = binder.filter(b => !b.is_folder && b.parent_id === folder.id);
+          childScenes.forEach(sc => {
+            const scData = state.scenes[sc.id] || {};
+            html += `<div class="print-scene">`;
+            html += `<div class="print-scene-title">${escapeHtml(sc.title)}</div>`;
+            html += `<div class="print-scene-body">${escapeHtml(scData.text || "")}</div>`;
+            html += `</div>`;
+          });
+          html += `</div>`;
+        });
+      }
+
+      if (rootScenes.length > 0) {
+        if (folders.length > 0) {
+          html += `<div class="print-chapter"><div class="print-chapter-title">단편 및 기타 장면</div>`;
+        }
+        rootScenes.forEach(sc => {
+          const scData = state.scenes[sc.id] || {};
+          html += `<div class="print-scene">`;
+          html += `<div class="print-scene-title">${escapeHtml(sc.title)}</div>`;
+          html += `<div class="print-scene-body">${escapeHtml(scData.text || "")}</div>`;
+          html += `</div>`;
+        });
+        if (folders.length > 0) {
+          html += `</div>`;
+        }
+      }
+
+      container.innerHTML = html;
+    }
+
     document.getElementById("btn-export-print")?.addEventListener("click", () => {
-      window.print();
+      // 1. Close export modal
+      const modal = document.getElementById("export-modal");
+      if (modal) modal.style.display = "none";
+      
+      // 2. Prepare clean manuscript HTML
+      preparePrintManuscript();
+
+      // 3. Trigger native print dialog
+      setTimeout(() => {
+        window.print();
+      }, 50);
     });
 
     function downloadFile(filename, content, mime) {
