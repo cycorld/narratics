@@ -1,3 +1,5 @@
+#![allow(clippy::missing_safety_doc)]
+
 use libc::c_char;
 use narratics_engine_core::{
     container::{NarrContainer, SceneRecord, SnapshotRecord},

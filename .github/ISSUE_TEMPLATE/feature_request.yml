@@ -1,0 +1,30 @@
+name: "💡 Feature Request"
+description: "Suggest a new idea, workflow enhancement, or platform integration"
+title: "[RFC]: "
+labels: ["enhancement", "discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We welcome proposals for new studio workflows, worldbuilding mechanics, manuscript exporters, or CRDT optimizations!
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem / Motivation"
+      description: "What limitation, friction, or unmet writing/authoring need are you encountering?"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Proposed Solution"
+      description: "Describe the desired feature, UX behavior, or architecture change."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives Considered"
+      description: "Any alternative approaches or existing tools you have evaluated."
+    validations:
+      required: false

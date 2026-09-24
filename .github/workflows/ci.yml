@@ -27,6 +27,9 @@ jobs:
       - name: Check code formatting
         run: cargo fmt --all -- --check
 
+      - name: Clippy Linter Check
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
       - name: Workspace Cargo Check
         run: cargo check --workspace
 

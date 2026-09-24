@@ -10,7 +10,7 @@
 [![E2E UX Gate](https://img.shields.io/badge/E2E%20UX%20Gate-5%2F5%20PASS-brightgreen.svg)](tests/e2e_ux_automated_gate.py)
 [![Platforms](https://img.shields.io/badge/Platform-Web%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20iOS%20%7C%20Android-lightgrey.svg)](#architecture)
 
-**[ English ](README.md)** • **[ 한국어 ](README.ko.md)**
+**[ English ](README.md)** • **[ 한국어 ](README.ko.md)** • **[ 日本語 ](README.ja.md)** • **[ 简体中文 ](README.zh.md)**
 
 </div>
 

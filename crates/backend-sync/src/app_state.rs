@@ -135,8 +135,7 @@ impl AppState {
         let active_file = if initial_file.exists() {
             initial_file
         } else {
-            let default_path = projects_dir.join("moonlight_chronicles.narr");
-            default_path
+            projects_dir.join("moonlight_chronicles.narr")
         };
 
         let active_id = active_file
@@ -233,7 +232,7 @@ impl AppState {
                 let engine = SceneEngine::from_bytes(&s.id, &s.ydoc_state)?;
                 scene_engines.insert(s.id.clone(), engine);
             }
-            for (_id, node) in &nodes {
+            for node in nodes.values() {
                 scene_titles.insert(node.id.clone(), node.title.clone());
             }
         }
@@ -316,7 +315,7 @@ impl AppState {
                             .unwrap_or(100000);
                         let scenes = c.list_scenes().unwrap_or_default();
                         let scenes_count = scenes.len();
-                        let total_words: usize = scenes.iter().map(|s| s.word_count as usize).sum();
+                        let total_words: usize = scenes.iter().map(|s| s.word_count).sum();
                         let updated_at = std::fs::metadata(&path)
                             .and_then(|m| m.modified())
                             .ok()
@@ -495,7 +494,7 @@ impl AppState {
             let engine = SceneEngine::from_bytes(&s.id, &s.ydoc_state)?;
             new_scenes.insert(s.id.clone(), engine);
         }
-        for (_id, node) in &nodes {
+        for node in nodes.values() {
             new_titles.insert(node.id.clone(), node.title.clone());
         }
 
@@ -608,7 +607,7 @@ impl AppState {
 
         if let Some(op) = op {
             let mut conn = self.container.lock().await;
-            conn.save_tree_ops(&[op.clone()])?;
+            conn.save_tree_ops(std::slice::from_ref(&op))?;
             drop(conn);
 
             let mut titles = self.scene_titles.write().await;
@@ -629,8 +628,7 @@ impl AppState {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let op = {
             let mut tree = self.tree.write().await;
-            let op = tree.move_node(node_id, "trash", "0", "deleted");
-            op
+            tree.move_node(node_id, "trash", "0", "deleted")
         };
 
         let mut conn = self.container.lock().await;
@@ -866,7 +864,7 @@ impl AppState {
         format: &str,
     ) -> Result<(String, String, Vec<u8>), Box<dyn std::error::Error + Send + Sync>> {
         let snap = self.get_snapshot().await?;
-        let safe_title = snap.title.replace('/', "_").replace('\\', "_");
+        let safe_title = snap.title.replace(['/', '\\'], "_");
 
         let mut md_content = String::new();
         let mut txt_content = String::new();

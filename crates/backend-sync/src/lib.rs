@@ -165,7 +165,7 @@ async fn download_release_handler(
     }
     match tokio::fs::read(&target).await {
         Ok(bytes) => {
-            let content_type = match filename.split('.').last() {
+            let content_type = match filename.split('.').next_back() {
                 Some("exe") => "application/vnd.microsoft.portable-executable",
                 Some("dmg") => "application/x-apple-diskimage",
                 Some("ipa") => "application/octet-stream",
@@ -344,7 +344,7 @@ async fn move_node_handler(
     // Save op to SQLite container
     {
         let mut conn = state.container.lock().await;
-        if let Err(e) = conn.save_tree_ops(&[op.clone()]) {
+        if let Err(e) = conn.save_tree_ops(std::slice::from_ref(&op)) {
             return Err((
                 StatusCode::INTERNAL_SERVER_ERROR,
                 format!("Failed to persist move op: {e}"),
@@ -585,7 +585,7 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
                                 }
                                 {
                                     let mut conn = state_clone.container.lock().await;
-                                    let _ = conn.save_tree_ops(&[op.clone()]);
+                                    let _ = conn.save_tree_ops(std::slice::from_ref(&op));
                                 }
                                 let _ = state_clone.tx.send(WsMessage::TreeMove { op, client_id });
                             }

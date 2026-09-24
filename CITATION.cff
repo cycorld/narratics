@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software in your research or creative writing studies, please cite it as below."
+authors:
+  - family-names: "Choi"
+    given-names: "Charles"
+    email: "cycorld@martian.link"
+  - name: "Narratics Contributors"
+title: "Narratics: High-Performance Local-First Novel & Worldbuilding Studio and CRDT Engine"
+version: 0.1.0
+date-released: 2026-09-24
+url: "https://narratics.com"
+repository-code: "https://github.com/cycorld/narratics"
+license: "PolyForm-Noncommercial-1.0.0"
+keywords:
+  - "crdt"
+  - "local-first"
+  - "novel-writing"
+  - "worldbuilding"
+  - "typst"
+  - "rust"
+  - "tauri"
+  - "sqlite"
