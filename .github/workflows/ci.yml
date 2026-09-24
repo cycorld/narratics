@@ -24,6 +24,9 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
+      - name: Install Typst CLI
+        uses: myriad-dreamin/setup-typst@v1
+
       - name: Check code formatting
         run: cargo fmt --all -- --check
 
