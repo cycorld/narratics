@@ -326,3 +326,84 @@ fn cycle_10_json_binary_roundtrip_schema_parity() {
     assert_eq!(lore.id, decoded_lore.id);
     assert_eq!(lore.aliases, decoded_lore.aliases);
 }
+
+#[test]
+fn cycle_11_one_million_char_manuscript_stress_load() {
+    // Axis 11: 1M characters (대하소설 100만 자) stress test
+    let scene = SceneEngine::new("scene_1m");
+    let paragraph = "어둠이 내린 서재에서 작가는 쉼 없이 타자기를 두드렸다. 글자 하나하나가 모여 거대한 세계관의 뼈대를 이루었고, 시간은 자정을 넘겨 새벽으로 향하고 있었다. ";
+    // 80 chars per paragraph * 12,500 = 1,000,000 chars
+    let repeats = 12_500;
+    let full_text = paragraph.repeat(repeats);
+    let expected_count = full_text.chars().count();
+    assert!(expected_count >= 1_000_000);
+
+    scene.insert(0, &full_text);
+    assert_eq!(scene.char_count(), expected_count);
+
+    // Encode diff and verify round-trip
+    let diff = scene.encode_diff(None).unwrap();
+    assert!(!diff.is_empty());
+
+    let peer = SceneEngine::new("scene_1m_peer");
+    peer.apply_update(&diff).unwrap();
+    assert_eq!(peer.char_count(), expected_count);
+}
+
+#[test]
+fn cycle_12_sql_injection_and_corrupted_identifier_defense() {
+    // Axis 12: SQL Injection attack vectors on IDs and metadata
+    let dir = tempdir().unwrap();
+    let db_path = dir.path().join("sqli_test.narr");
+    let container = NarrContainer::open(&db_path).unwrap();
+
+    let sqli_scene_id = "scene'; DROP TABLE scenes; --";
+    let sqli_text = "텍스트'; DROP TABLE meta; --";
+    let scene = SceneEngine::new("sqli_scene");
+    scene.insert(0, sqli_text);
+
+    assert!(container
+        .save_scene(sqli_scene_id, &scene.to_bytes(), sqli_text, 10)
+        .is_ok());
+
+    // Verify tables still exist and data is preserved intact
+    let loaded = container.load_scene(sqli_scene_id).unwrap().unwrap();
+    assert_eq!(loaded.id, sqli_scene_id);
+    assert_eq!(loaded.text_cache, sqli_text);
+
+    // SQL Injection in meta
+    container
+        .set_meta("title'; DROP TABLE lore; --", "위험한 제목")
+        .unwrap();
+    assert_eq!(
+        container
+            .get_meta("title'; DROP TABLE lore; --")
+            .unwrap()
+            .as_deref(),
+        Some("위험한 제목")
+    );
+}
+
+#[test]
+fn cycle_13_trash_quarantine_and_isolation_invariant() {
+    // Axis 13: Tree Move CRDT trash quarantine and hierarchy isolation
+    let mut tree = TreeCRDT::new(1, "root");
+
+    tree.move_node("chap_1", "root", "10", "1장");
+    tree.move_node("scene_1_1", "chap_1", "10", "1-1씬");
+    tree.move_node("scene_1_2", "chap_1", "20", "1-2씬");
+
+    let (nodes_before, _) = tree.materialize_active();
+    assert_eq!(nodes_before.len(), 4); // root, chap_1, scene_1_1, scene_1_2
+    assert!(nodes_before.contains_key("scene_1_1"));
+
+    // Move chap_1 to trash
+    tree.move_node("chap_1", "trash", "99", "휴지통 1장");
+    let (nodes_after, _) = tree.materialize_active();
+
+    // Invariant: chap_1, scene_1_1, scene_1_2 are all excluded from active hierarchy
+    assert!(!nodes_after.contains_key("chap_1"));
+    assert!(!nodes_after.contains_key("scene_1_1"));
+    assert!(!nodes_after.contains_key("scene_1_2"));
+    assert_eq!(nodes_after.len(), 1); // Only root remains
+}

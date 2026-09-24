@@ -373,13 +373,18 @@ impl NarrContainer {
     }
 
     pub fn delete_lore(&self, id: &str) -> Result<(), ContainerError> {
-        self.conn.execute("DELETE FROM lore WHERE id = ?1", rusqlite::params![id])?;
+        self.conn
+            .execute("DELETE FROM lore WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
     }
 
     pub fn delete_scene(&self, id: &str) -> Result<(), ContainerError> {
-        self.conn.execute("DELETE FROM scenes WHERE id = ?1", rusqlite::params![id])?;
-        self.conn.execute("DELETE FROM snapshots WHERE target_id = ?1", rusqlite::params![id])?;
+        self.conn
+            .execute("DELETE FROM scenes WHERE id = ?1", rusqlite::params![id])?;
+        self.conn.execute(
+            "DELETE FROM snapshots WHERE target_id = ?1",
+            rusqlite::params![id],
+        )?;
         Ok(())
     }
 
@@ -413,7 +418,10 @@ impl NarrContainer {
         Ok(())
     }
 
-    pub fn list_snapshots(&self, target_id: Option<&str>) -> Result<Vec<SnapshotRecord>, ContainerError> {
+    pub fn list_snapshots(
+        &self,
+        target_id: Option<&str>,
+    ) -> Result<Vec<SnapshotRecord>, ContainerError> {
         let mut list = Vec::new();
         if let Some(target) = target_id {
             let mut stmt = self.conn.prepare(

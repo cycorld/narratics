@@ -42,7 +42,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .map(PathBuf::from)
         .unwrap_or_else(|_| projects_dir.join("moonlight_chronicles.narr"));
 
-    info!("Initializing Narratics AppState with projects_dir: {:?}, initial_file: {:?}", projects_dir, project_path);
+    info!(
+        "Initializing Narratics AppState with projects_dir: {:?}, initial_file: {:?}",
+        projects_dir, project_path
+    );
     let app_state = AppState::new(projects_dir, project_path)?;
 
     let app = Router::new()
@@ -52,7 +55,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .route("/studio", get(index_handler))
         .route("/api/releases", get(api_releases_handler))
         .route("/releases/SHA256SUMS", get(sha256sums_handler))
-        .route("/releases/{platform}/{filename}", get(download_release_handler))
+        .route(
+            "/releases/{platform}/{filename}",
+            get(download_release_handler),
+        )
         .route("/docs/{filename}", get(docs_handler))
         .route("/api/state", get(state_handler))
         .route("/api/projects", get(list_projects_handler))
@@ -60,7 +66,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .route("/api/projects/switch", post(switch_project_handler))
         .route("/api/projects/delete", post(delete_project_handler))
         .route("/api/projects/meta", post(update_project_meta_handler))
-        .route("/api/scenes/{id}", get(get_scene_handler).post(post_scene_handler))
+        .route(
+            "/api/scenes/{id}",
+            get(get_scene_handler).post(post_scene_handler),
+        )
         .route("/api/scenes/{id}/status", post(scene_status_handler))
         .route("/api/scenes/{id}/restore", post(restore_scene_handler))
         .route("/api/binder/move", post(move_node_handler))
@@ -175,12 +184,21 @@ async fn sha256sums_handler() -> Result<impl IntoResponse, (StatusCode, String)>
 async fn download_release_handler(
     Path((platform, filename)): Path<(String, String)>,
 ) -> Result<impl IntoResponse, (StatusCode, String)> {
-    if platform.contains("..") || filename.contains("..") || platform.contains('/') || filename.contains('/') {
+    if platform.contains("..")
+        || filename.contains("..")
+        || platform.contains('/')
+        || filename.contains('/')
+    {
         return Err((StatusCode::BAD_REQUEST, "Invalid path segment".into()));
     }
-    let target = std::path::Path::new("releases").join(&platform).join(&filename);
+    let target = std::path::Path::new("releases")
+        .join(&platform)
+        .join(&filename);
     if !target.exists() {
-        return Err((StatusCode::NOT_FOUND, format!("Artifact not found: {platform}/{filename}")));
+        return Err((
+            StatusCode::NOT_FOUND,
+            format!("Artifact not found: {platform}/{filename}"),
+        ));
     }
     match tokio::fs::read(&target).await {
         Ok(bytes) => {
@@ -203,7 +221,10 @@ async fn download_release_handler(
             }
             Ok((headers, bytes))
         }
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Read error: {e}"))),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Read error: {e}"),
+        )),
     }
 }
 
@@ -228,7 +249,10 @@ async fn docs_handler(
             }
             Ok((headers, bytes))
         }
-        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, format!("Read error: {e}"))),
+        Err(e) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Read error: {e}"),
+        )),
     }
 }
 
@@ -256,7 +280,10 @@ async fn get_scene_handler(
         let title = titles.get(&id).cloned().unwrap_or_else(|| id.clone());
         let text = engine.get_text();
         let word_count = engine.char_count();
-        let status = statuses.get(&id).cloned().unwrap_or_else(|| "초고".to_string());
+        let status = statuses
+            .get(&id)
+            .cloned()
+            .unwrap_or_else(|| "초고".to_string());
 
         Ok(Json(SceneDto {
             id,
@@ -513,10 +540,7 @@ async fn restore_scene_handler(
     Ok(Json(serde_json::json!({ "success": true })))
 }
 
-async fn ws_handler(
-    ws: WebSocketUpgrade,
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+async fn ws_handler(ws: WebSocketUpgrade, State(state): State<AppState>) -> impl IntoResponse {
     ws.on_upgrade(move |socket| handle_socket(socket, state))
 }
 
@@ -577,12 +601,8 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
                                     if let Some(engine) = scenes.get(&scene_id) {
                                         if let Ok(diff) = engine.encode_diff(None) {
                                             let conn = state_clone.container.lock().await;
-                                            let _ = conn.save_scene(
-                                                &scene_id,
-                                                &diff,
-                                                &text,
-                                                word_count,
-                                            );
+                                            let _ = conn
+                                                .save_scene(&scene_id, &diff, &text, word_count);
                                         }
                                     }
                                 }
@@ -604,20 +624,16 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
                                     let mut conn = state_clone.container.lock().await;
                                     let _ = conn.save_tree_ops(&[op.clone()]);
                                 }
-                                let _ = state_clone.tx.send(WsMessage::TreeMove {
-                                    op,
-                                    client_id,
-                                });
+                                let _ = state_clone.tx.send(WsMessage::TreeMove { op, client_id });
                             }
                             WsMessage::LoreUpdate { lore, client_id } => {
                                 {
                                     let conn = state_clone.container.lock().await;
                                     let _ = conn.save_lore(&lore);
                                 }
-                                let _ = state_clone.tx.send(WsMessage::LoreUpdate {
-                                    lore,
-                                    client_id,
-                                });
+                                let _ = state_clone
+                                    .tx
+                                    .send(WsMessage::LoreUpdate { lore, client_id });
                             }
                             WsMessage::Ping => {
                                 let _ = state_clone.tx.send(WsMessage::Pong);
@@ -690,7 +706,9 @@ async fn create_project_handler(
     Json(payload): Json<app_state::CreateProjectReq>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     match state.create_project(payload).await {
-        Ok(id) => Ok(Json(serde_json::json!({ "status": "ok", "project_id": id }))),
+        Ok(id) => Ok(Json(
+            serde_json::json!({ "status": "ok", "project_id": id }),
+        )),
         Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
     }
 }
@@ -700,7 +718,9 @@ async fn switch_project_handler(
     Json(payload): Json<SwitchProjectPayload>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     match state.switch_project(&payload.id).await {
-        Ok(_) => Ok(Json(serde_json::json!({ "status": "ok", "project_id": payload.id }))),
+        Ok(_) => Ok(Json(
+            serde_json::json!({ "status": "ok", "project_id": payload.id }),
+        )),
         Err(e) => Err((StatusCode::NOT_FOUND, e.to_string())),
     }
 }
@@ -749,7 +769,10 @@ async fn reorder_node_handler(
     State(state): State<AppState>,
     Json(payload): Json<ReorderNodePayload>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
-    match state.reorder_binder_node(&payload.id, &payload.direction).await {
+    match state
+        .reorder_binder_node(&payload.id, &payload.direction)
+        .await
+    {
         Ok(_) => Ok(Json(serde_json::json!({ "status": "ok" }))),
         Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
     }

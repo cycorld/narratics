@@ -13,9 +13,7 @@ use tokio::sync::{broadcast, Mutex, RwLock};
 #[serde(tag = "type")]
 pub enum WsMessage {
     #[serde(rename = "init")]
-    Init {
-        state: ProjectStateSnapshot,
-    },
+    Init { state: ProjectStateSnapshot },
     #[serde(rename = "text_update")]
     TextUpdate {
         scene_id: String,
@@ -24,25 +22,16 @@ pub enum WsMessage {
         client_id: String,
     },
     #[serde(rename = "tree_move")]
-    TreeMove {
-        op: MoveOp,
-        client_id: String,
-    },
+    TreeMove { op: MoveOp, client_id: String },
     #[serde(rename = "lore_update")]
-    LoreUpdate {
-        lore: LoreRecord,
-        client_id: String,
-    },
+    LoreUpdate { lore: LoreRecord, client_id: String },
     #[serde(rename = "snapshot_created")]
     SnapshotCreated {
         snapshot: SnapshotRecord,
         client_id: String,
     },
     #[serde(rename = "scene_status_updated")]
-    SceneStatusUpdated {
-        scene_id: String,
-        status: String,
-    },
+    SceneStatusUpdated { scene_id: String, status: String },
     #[serde(rename = "ping")]
     Ping,
     #[serde(rename = "pong")]
@@ -231,7 +220,10 @@ impl AppState {
             container.set_meta("title", "달빛 아래의 크로니클")?;
             container.set_meta("author", "최용철")?;
             container.set_meta("genre", "다크 판타지")?;
-            container.set_meta("synopsis", "제국의 암운 속에서 붉은 달의 비밀을 쫓는 밀매업자 카일의 서사시.")?;
+            container.set_meta(
+                "synopsis",
+                "제국의 암운 속에서 붉은 달의 비밀을 쫓는 밀매업자 카일의 서사시.",
+            )?;
             container.set_meta("target_words", "100000")?;
             container.checkpoint()?;
         } else {
@@ -258,7 +250,9 @@ impl AppState {
         })
     }
 
-    pub async fn list_projects(&self) -> Result<Vec<ProjectInfoDto>, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn list_projects(
+        &self,
+    ) -> Result<Vec<ProjectInfoDto>, Box<dyn std::error::Error + Send + Sync>> {
         let active_id = self.active_project_id.read().await.clone();
         let mut list = Vec::new();
 
@@ -270,7 +264,11 @@ impl AppState {
             let entry = entry?;
             let path = entry.path();
             if path.extension().and_then(|s| s.to_str()) == Some("narr") {
-                let stem = path.file_stem().and_then(|s| s.to_str()).unwrap_or("").to_string();
+                let stem = path
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("")
+                    .to_string();
                 let is_active = stem == active_id;
 
                 if is_active {
@@ -287,7 +285,11 @@ impl AppState {
 
                     list.push(ProjectInfoDto {
                         id: stem.clone(),
-                        file_name: path.file_name().and_then(|s| s.to_str()).unwrap_or("").to_string(),
+                        file_name: path
+                            .file_name()
+                            .and_then(|s| s.to_str())
+                            .unwrap_or("")
+                            .to_string(),
                         title: snap.title,
                         author: snap.author,
                         genre: snap.genre,
@@ -303,10 +305,15 @@ impl AppState {
                     // Read file metadata via isolated container
                     if let Ok(c) = NarrContainer::open(&path) {
                         let title = c.get_meta("title")?.unwrap_or_else(|| stem.clone());
-                        let author = c.get_meta("author")?.unwrap_or_else(|| "작가 미상".to_string());
+                        let author = c
+                            .get_meta("author")?
+                            .unwrap_or_else(|| "작가 미상".to_string());
                         let genre = c.get_meta("genre")?.unwrap_or_else(|| "일반".to_string());
                         let synopsis = c.get_meta("synopsis")?.unwrap_or_default();
-                        let target_words = c.get_meta("target_words")?.and_then(|s| s.parse().ok()).unwrap_or(100000);
+                        let target_words = c
+                            .get_meta("target_words")?
+                            .and_then(|s| s.parse().ok())
+                            .unwrap_or(100000);
                         let scenes = c.list_scenes().unwrap_or_default();
                         let scenes_count = scenes.len();
                         let total_words: usize = scenes.iter().map(|s| s.word_count as usize).sum();
@@ -319,7 +326,11 @@ impl AppState {
 
                         list.push(ProjectInfoDto {
                             id: stem.clone(),
-                            file_name: path.file_name().and_then(|s| s.to_str()).unwrap_or("").to_string(),
+                            file_name: path
+                                .file_name()
+                                .and_then(|s| s.to_str())
+                                .unwrap_or("")
+                                .to_string(),
                             title,
                             author,
                             genre,
@@ -336,11 +347,18 @@ impl AppState {
             }
         }
 
-        list.sort_by(|a, b| b.is_active.cmp(&a.is_active).then_with(|| b.updated_at.cmp(&a.updated_at)));
+        list.sort_by(|a, b| {
+            b.is_active
+                .cmp(&a.is_active)
+                .then_with(|| b.updated_at.cmp(&a.updated_at))
+        });
         Ok(list)
     }
 
-    pub async fn create_project(&self, req: CreateProjectReq) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn create_project(
+        &self,
+        req: CreateProjectReq,
+    ) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
         let clean_title = req.title.trim();
         if clean_title.is_empty() {
             return Err("작품 제목은 필수입니다.".into());
@@ -358,7 +376,11 @@ impl AppState {
         let slug = if slug_base.is_empty() {
             format!("book_{}", now_ts)
         } else {
-            format!("{}_{}", slug_base, &now_ts.to_string()[now_ts.to_string().len().saturating_sub(4)..])
+            format!(
+                "{}_{}",
+                slug_base,
+                &now_ts.to_string()[now_ts.to_string().len().saturating_sub(4)..]
+            )
         };
 
         let file_path = self.projects_dir.join(format!("{}.narr", slug));
@@ -445,7 +467,10 @@ impl AppState {
         Ok(slug)
     }
 
-    pub async fn switch_project(&self, project_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn switch_project(
+        &self,
+        project_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let file_path = self.projects_dir.join(format!("{}.narr", project_id));
         if !file_path.exists() {
             return Err(format!("프로젝트 파일을 찾을 수 없습니다: {:?}", file_path).into());
@@ -506,7 +531,10 @@ impl AppState {
         Ok(())
     }
 
-    pub async fn delete_project(&self, project_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn delete_project(
+        &self,
+        project_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let active_id = self.active_project_id.read().await.clone();
         if active_id == project_id {
             // Cannot delete active project without switching
@@ -526,7 +554,10 @@ impl AppState {
         Ok(())
     }
 
-    pub async fn update_project_meta(&self, req: UpdateProjectMetaReq) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn update_project_meta(
+        &self,
+        req: UpdateProjectMetaReq,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let conn = self.container.lock().await;
         if let Some(t) = req.title {
             if !t.trim().is_empty() {
@@ -553,7 +584,11 @@ impl AppState {
         Ok(())
     }
 
-    pub async fn rename_binder_node(&self, node_id: &str, new_title: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn rename_binder_node(
+        &self,
+        node_id: &str,
+        new_title: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let clean_title = new_title.trim();
         if clean_title.is_empty() {
             return Err("노드 제목은 비워둘 수 없습니다.".into());
@@ -588,7 +623,10 @@ impl AppState {
         Ok(())
     }
 
-    pub async fn delete_binder_node(&self, node_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn delete_binder_node(
+        &self,
+        node_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let op = {
             let mut tree = self.tree.write().await;
             let op = tree.move_node(node_id, "trash", "0", "deleted");
@@ -618,7 +656,11 @@ impl AppState {
         Ok(())
     }
 
-    pub async fn reorder_binder_node(&self, node_id: &str, direction: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn reorder_binder_node(
+        &self,
+        node_id: &str,
+        direction: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut tree = self.tree.write().await;
         let (nodes, _) = tree.materialize_active();
         let target_node = match nodes.get(node_id) {
@@ -626,7 +668,10 @@ impl AppState {
             None => return Ok(()),
         };
 
-        let parent_id = target_node.parent.clone().unwrap_or_else(|| "root".to_string());
+        let parent_id = target_node
+            .parent
+            .clone()
+            .unwrap_or_else(|| "root".to_string());
         let mut siblings: Vec<_> = nodes
             .values()
             .filter(|n| n.parent.as_deref().unwrap_or("root") == parent_id.as_str())
@@ -641,10 +686,14 @@ impl AppState {
         };
 
         let swap_idx = if direction == "up" {
-            if idx == 0 { return Ok(()); }
+            if idx == 0 {
+                return Ok(());
+            }
             idx - 1
         } else {
-            if idx + 1 >= siblings.len() { return Ok(()); }
+            if idx + 1 >= siblings.len() {
+                return Ok(());
+            }
             idx + 1
         };
 
@@ -654,16 +703,32 @@ impl AppState {
         // If ranks are equal, re-space ranks
         let (new_target_rank, new_other_rank) = if current_rank == other_rank {
             if direction == "up" {
-                (format!("{:04}", (swap_idx * 10)), format!("{:04}", (idx * 10 + 5)))
+                (
+                    format!("{:04}", (swap_idx * 10)),
+                    format!("{:04}", (idx * 10 + 5)),
+                )
             } else {
-                (format!("{:04}", (swap_idx * 10 + 5)), format!("{:04}", (idx * 10)))
+                (
+                    format!("{:04}", (swap_idx * 10 + 5)),
+                    format!("{:04}", (idx * 10)),
+                )
             }
         } else {
             (other_rank, current_rank)
         };
 
-        let op1 = tree.move_node(&siblings[idx].id, &parent_id, &new_target_rank, &siblings[idx].title);
-        let op2 = tree.move_node(&siblings[swap_idx].id, &parent_id, &new_other_rank, &siblings[swap_idx].title);
+        let op1 = tree.move_node(
+            &siblings[idx].id,
+            &parent_id,
+            &new_target_rank,
+            &siblings[idx].title,
+        );
+        let op2 = tree.move_node(
+            &siblings[swap_idx].id,
+            &parent_id,
+            &new_other_rank,
+            &siblings[swap_idx].title,
+        );
 
         let mut conn = self.container.lock().await;
         conn.save_tree_ops(&[op1, op2])?;
@@ -675,7 +740,10 @@ impl AppState {
         Ok(())
     }
 
-    pub async fn delete_lore(&self, lore_id: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn delete_lore(
+        &self,
+        lore_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let conn = self.container.lock().await;
         conn.delete_lore(lore_id)?;
         drop(conn);
@@ -685,7 +753,9 @@ impl AppState {
         Ok(())
     }
 
-    pub async fn get_snapshot(&self) -> Result<ProjectStateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn get_snapshot(
+        &self,
+    ) -> Result<ProjectStateSnapshot, Box<dyn std::error::Error + Send + Sync>> {
         let conn = self.container.lock().await;
         let tree = self.tree.read().await;
         let (nodes, _) = tree.materialize_active();
@@ -694,11 +764,20 @@ impl AppState {
         let statuses = self.scene_statuses.read().await;
         let project_id = self.active_project_id.read().await.clone();
 
-        let title = conn.get_meta("title")?.unwrap_or_else(|| "Narratics Novel".to_string());
-        let author = conn.get_meta("author")?.unwrap_or_else(|| "최용철".to_string());
-        let genre = conn.get_meta("genre")?.unwrap_or_else(|| "장편소설".to_string());
+        let title = conn
+            .get_meta("title")?
+            .unwrap_or_else(|| "Narratics Novel".to_string());
+        let author = conn
+            .get_meta("author")?
+            .unwrap_or_else(|| "최용철".to_string());
+        let genre = conn
+            .get_meta("genre")?
+            .unwrap_or_else(|| "장편소설".to_string());
         let synopsis = conn.get_meta("synopsis")?.unwrap_or_default();
-        let target_words = conn.get_meta("target_words")?.and_then(|s| s.parse().ok()).unwrap_or(100000);
+        let target_words = conn
+            .get_meta("target_words")?
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(100000);
 
         let mut binder: Vec<BinderItemDto> = Vec::new();
         let mut scene_dtos: HashMap<String, SceneDto> = HashMap::new();
@@ -718,7 +797,10 @@ impl AppState {
             } else {
                 0
             };
-            let status = statuses.get(id).cloned().unwrap_or_else(|| "초고".to_string());
+            let status = statuses
+                .get(id)
+                .cloned()
+                .unwrap_or_else(|| "초고".to_string());
 
             binder.push(BinderItemDto {
                 id: id.clone(),
@@ -738,7 +820,10 @@ impl AppState {
             let title = titles.get(id).cloned().unwrap_or_else(|| id.clone());
             let text = engine.get_text();
             let count = engine.char_count();
-            let status = statuses.get(id).cloned().unwrap_or_else(|| "초고".to_string());
+            let status = statuses
+                .get(id)
+                .cloned()
+                .unwrap_or_else(|| "초고".to_string());
             scene_dtos.insert(
                 id.clone(),
                 SceneDto {
@@ -776,7 +861,10 @@ impl AppState {
         })
     }
 
-    pub async fn export_manuscript(&self, format: &str) -> Result<(String, String, Vec<u8>), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn export_manuscript(
+        &self,
+        format: &str,
+    ) -> Result<(String, String, Vec<u8>), Box<dyn std::error::Error + Send + Sync>> {
         let snap = self.get_snapshot().await?;
         let safe_title = snap.title.replace('/', "_").replace('\\', "_");
 
@@ -784,7 +872,10 @@ impl AppState {
         let mut txt_content = String::new();
         let mut typ_body = String::new();
 
-        md_content.push_str(&format!("# {}\n\n> 저자: {}\n> 장르: {}\n\n", snap.title, snap.author, snap.genre));
+        md_content.push_str(&format!(
+            "# {}\n\n> 저자: {}\n> 장르: {}\n\n",
+            snap.title, snap.author, snap.genre
+        ));
         if !snap.synopsis.is_empty() {
             md_content.push_str(&format!("**시놉시스**\n{}\n\n---\n\n", snap.synopsis));
         }
@@ -795,11 +886,11 @@ impl AppState {
             if item.is_folder {
                 md_content.push_str(&format!("## {}\n\n", item.title));
                 txt_content.push_str(&format!("\n\n[ {} ]\n\n", item.title));
-                typ_body.push_str(&format!("= {}\n\n", escape_typst(&item.title)));
+                typ_body.push_str(&format!("= {}\n\n", escape_typst_content(&item.title)));
             } else {
                 md_content.push_str(&format!("### {}\n\n", item.title));
                 txt_content.push_str(&format!("== {} ==\n\n", item.title));
-                typ_body.push_str(&format!("== {}\n\n", escape_typst(&item.title)));
+                typ_body.push_str(&format!("== {}\n\n", escape_typst_content(&item.title)));
 
                 if let Some(sc) = snap.scenes.get(&item.id) {
                     md_content.push_str(&sc.text);
@@ -808,7 +899,7 @@ impl AppState {
                     txt_content.push_str(&sc.text);
                     txt_content.push_str("\n\n");
 
-                    typ_body.push_str(&escape_typst(&sc.text));
+                    typ_body.push_str(&escape_typst_content(&sc.text));
                     typ_body.push_str("\n\n");
                 }
             }
@@ -859,11 +950,22 @@ impl AppState {
     }
 }
 
-fn escape_typst(s: &str) -> String {
+fn escape_typst_str(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('"', "\\\"")
+}
+
+fn escape_typst_content(s: &str) -> String {
     s.replace('\\', "\\\\")
         .replace('#', "\\#")
         .replace('$', "\\$")
         .replace('@', "\\@")
+        .replace('[', "\\[")
+        .replace(']', "\\]")
+        .replace('*', "\\*")
+        .replace('_', "\\_")
+        .replace('`', "\\`")
+        .replace('<', "\\<")
+        .replace('>', "\\>")
 }
 
 fn render_typst_document(title: &str, author: &str, synopsis: &str, body: &str) -> String {
@@ -878,12 +980,12 @@ fn render_typst_document(title: &str, author: &str, synopsis: &str, body: &str) 
 #align(left)[#text(size: 9.5pt, fill: luma(80))[{}]]
 #pagebreak()
 "#,
-            escape_typst(synopsis)
+            escape_typst_content(synopsis)
         )
     };
 
     format!(
-r#"// Narratics 서사 집필 스튜디오 - Typst 조판 규격서
+        r#"// Narratics 서사 집필 스튜디오 - Typst 조판 규격서
 #set document(title: "{}", author: "{}")
 #set page(
   paper: "a5",
@@ -932,11 +1034,11 @@ r#"// Narratics 서사 집필 스튜디오 - Typst 조판 규격서
 // 본문 원고
 {}
 "#,
-        escape_typst(title),
-        escape_typst(author),
-        escape_typst(title),
-        escape_typst(title),
-        escape_typst(author),
+        escape_typst_str(title),
+        escape_typst_str(author),
+        escape_typst_content(title),
+        escape_typst_content(title),
+        escape_typst_content(author),
         syn_block,
         body
     )

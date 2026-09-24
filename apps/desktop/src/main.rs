@@ -1,8 +1,6 @@
 mod commands;
 
-use commands::{
-    create_snapshot, export_manuscript, move_node, open_project, save_scene, DesktopState,
-};
+use commands::{create_snapshot, export_manuscript, open_project, save_scene, DesktopState};
 use std::sync::Arc;
 
 fn main() {
@@ -70,7 +68,8 @@ mod tests {
         assert_eq!(summary.scenes_count, 0);
 
         // Move node / create node
-        let tree_res = move_node(&state, "act_1", "root", "10", "제1막: 시작").expect("move failed");
+        let tree_res =
+            move_node(&state, "act_1", "root", "10", "제1막: 시작").expect("move failed");
         assert_eq!(tree_res.nodes.len(), 2); // root + act_1
 
         // Save scene

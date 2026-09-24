@@ -57,8 +57,9 @@ impl DesktopState {
 }
 
 pub fn open_project(state: &Arc<DesktopState>, path_str: &str) -> Result<ProjectSummary, String> {
-    let container = NarrContainer::open(path_str).map_err(|e| format!("컨테이너 열기 실패: {e}"))?;
-    
+    let container =
+        NarrContainer::open(path_str).map_err(|e| format!("컨테이너 열기 실패: {e}"))?;
+
     let title = container
         .get_meta("title")
         .map_err(|e| format!("메타데이터 조회 실패: {e}"))?
@@ -109,7 +110,9 @@ pub fn save_scene(
 
     let engine = SceneEngine::new(scene_id);
     engine.insert(0, text);
-    let diff = engine.encode_diff(None).map_err(|e| format!("인코딩 실패: {e}"))?;
+    let diff = engine
+        .encode_diff(None)
+        .map_err(|e| format!("인코딩 실패: {e}"))?;
     let char_count = engine.char_count();
 
     container
@@ -131,17 +134,25 @@ pub fn move_node(
     rank: &str,
     title: &str,
 ) -> Result<TreeSummary, String> {
-    let mut tree = state.tree.lock().unwrap();
-    let op = tree.move_node(child_id, parent_id, rank, title);
+    let op = {
+        let mut tree = state.tree.lock().unwrap();
+        tree.move_node(child_id, parent_id, rank, title)
+    };
 
-    let mut conn_guard = state.container.lock().unwrap();
-    if let Some(container) = conn_guard.as_mut() {
-        let _ = container.save_tree_ops(&[op]);
+    {
+        let mut conn_guard = state.container.lock().unwrap();
+        if let Some(container) = conn_guard.as_mut() {
+            let _ = container.save_tree_ops(&[op]);
+        }
     }
 
-    let (nodes_map, _) = tree.materialize();
-    let mut nodes: Vec<NodeInfo> = nodes_map.into_values().collect();
-    nodes.sort_by(|a, b| a.rank.cmp(&b.rank));
+    let nodes = {
+        let tree = state.tree.lock().unwrap();
+        let (nodes_map, _) = tree.materialize();
+        let mut nodes: Vec<NodeInfo> = nodes_map.into_values().collect();
+        nodes.sort_by(|a, b| a.rank.cmp(&b.rank));
+        nodes
+    };
 
     Ok(TreeSummary {
         ops_count: 1,
@@ -178,22 +189,40 @@ pub fn create_snapshot(
     Ok(snap_id)
 }
 
-pub fn export_manuscript(state: &Arc<DesktopState>, format_type: &str) -> Result<ExportSummary, String> {
-    let mut conn_guard = state.container.lock().unwrap();
-    let container = conn_guard
-        .as_mut()
-        .ok_or_else(|| "열려있는 프로젝트가 없습니다.".to_string())?;
+pub fn export_manuscript(
+    state: &Arc<DesktopState>,
+    format_type: &str,
+) -> Result<ExportSummary, String> {
+    let (title, author, scenes) = {
+        let mut conn_guard = state.container.lock().unwrap();
+        let container = conn_guard
+            .as_mut()
+            .ok_or_else(|| "열려있는 프로젝트가 없습니다.".to_string())?;
 
-    let title = container.get_meta("title").ok().flatten().unwrap_or_else(|| "내러틱스 원고".into());
-    let author = container.get_meta("author").ok().flatten().unwrap_or_else(|| "작가".into());
+        let title = container
+            .get_meta("title")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "내러틱스 원고".into());
+        let author = container
+            .get_meta("author")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "작가".into());
+        let scenes = container.list_scenes().unwrap_or_default();
+        (title, author, scenes)
+    };
 
-    let tree = state.tree.lock().unwrap();
-    let (nodes_map, _) = tree.materialize();
-    let mut nodes: Vec<NodeInfo> = nodes_map.into_values().collect();
-    nodes.sort_by(|a, b| a.rank.cmp(&b.rank));
+    let nodes = {
+        let tree = state.tree.lock().unwrap();
+        let (nodes_map, _) = tree.materialize();
+        let mut nodes: Vec<NodeInfo> = nodes_map.into_values().collect();
+        nodes.sort_by(|a, b| a.rank.cmp(&b.rank));
+        nodes
+    };
 
-    let scenes = container.list_scenes().unwrap_or_default();
-    let scene_map: HashMap<String, SceneRecord> = scenes.into_iter().map(|s| (s.id.clone(), s)).collect();
+    let scene_map: HashMap<String, SceneRecord> =
+        scenes.into_iter().map(|s| (s.id.clone(), s)).collect();
 
     let mut combined_text = String::new();
     combined_text.push_str(&format!("# {}\n\n저자: {}\n\n---\n\n", title, author));

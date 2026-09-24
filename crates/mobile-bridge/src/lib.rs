@@ -254,7 +254,47 @@ fn to_c_json<T: Serialize>(res: MobileResponse<T>) -> *mut c_char {
     let json_str = serde_json::to_string(&res).unwrap_or_else(|_| {
         r#"{"success":false,"data":null,"error":"JSON serialization failure"}"#.to_string()
     });
-    CString::new(json_str).unwrap().into_raw()
+    // Sanitize any embedded null bytes to prevent CString::new panic
+    let sanitized = json_str.replace('\0', "\\u0000");
+    match CString::new(sanitized) {
+        Ok(c) => c.into_raw(),
+        Err(_) => {
+            let fallback =
+                CString::new(r#"{"success":false,"data":null,"error":"Null byte in output"}"#)
+                    .unwrap();
+            fallback.into_raw()
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn narr_mobile_create_snapshot(
+    path: *const c_char,
+    target_id: *const c_char,
+    label: *const c_char,
+    content: *const c_char,
+) -> *mut c_char {
+    let path_str = match c_str_to_str(path) {
+        Ok(s) => s,
+        Err(e) => return to_c_json::<()>(MobileResponse::err(e.to_string())),
+    };
+    let target_str = match c_str_to_str(target_id) {
+        Ok(s) => s,
+        Err(e) => return to_c_json::<()>(MobileResponse::err(e.to_string())),
+    };
+    let label_str = match c_str_to_str(label) {
+        Ok(s) => s,
+        Err(e) => return to_c_json::<()>(MobileResponse::err(e.to_string())),
+    };
+    let content_str = match c_str_to_str(content) {
+        Ok(s) => s,
+        Err(e) => return to_c_json::<()>(MobileResponse::err(e.to_string())),
+    };
+
+    match mobile_create_snapshot(path_str, target_str, label_str, content_str) {
+        Ok(snap_id) => to_c_json(MobileResponse::ok(snap_id)),
+        Err(e) => to_c_json::<()>(MobileResponse::err(e.to_string())),
+    }
 }
 
 #[no_mangle]
@@ -351,16 +391,19 @@ mod tests {
         assert_eq!(state.nodes.len(), 1); // root
 
         // Move node
-        let nodes = mobile_move_node(test_path, "sc_1", "root", "10", "1화: 시작").expect("move failed");
+        let nodes =
+            mobile_move_node(test_path, "sc_1", "root", "10", "1화: 시작").expect("move failed");
         assert_eq!(nodes.len(), 2); // root + sc_1
 
         // Save scene
-        let sc = mobile_save_scene(test_path, "sc_1", "모바일에서 작성한 첫 번째 문단입니다.").expect("save failed");
+        let sc = mobile_save_scene(test_path, "sc_1", "모바일에서 작성한 첫 번째 문단입니다.")
+            .expect("save failed");
         assert_eq!(sc.id, "sc_1");
         assert!(sc.word_count > 0);
 
         // Snapshot
-        let snap_id = mobile_create_snapshot(test_path, "sc_1", "모바일 스냅샷", "내용").expect("snap failed");
+        let snap_id = mobile_create_snapshot(test_path, "sc_1", "모바일 스냅샷", "내용")
+            .expect("snap failed");
         assert!(snap_id.starts_with("snap_mob_"));
 
         // Test C-ABI
@@ -376,5 +419,66 @@ mod tests {
         }
 
         let _ = std::fs::remove_file(test_path);
+    }
+
+    #[test]
+    fn test_mobile_bridge_null_safety() {
+        unsafe {
+            // Null pointer into narr_mobile_open
+            let r1 = narr_mobile_open(std::ptr::null());
+            assert!(!r1.is_null());
+            let s1 = CStr::from_ptr(r1).to_str().unwrap();
+            assert!(s1.contains("\"success\":false"));
+            assert!(s1.contains("Null pointer"));
+            narr_mobile_free_string(r1);
+
+            // Null pointer into narr_mobile_save_scene
+            let r2 = narr_mobile_save_scene(std::ptr::null(), std::ptr::null(), std::ptr::null());
+            assert!(!r2.is_null());
+            let s2 = CStr::from_ptr(r2).to_str().unwrap();
+            assert!(s2.contains("\"success\":false"));
+            narr_mobile_free_string(r2);
+
+            // Null pointer into narr_mobile_move_node
+            let r3 = narr_mobile_move_node(
+                std::ptr::null(),
+                std::ptr::null(),
+                std::ptr::null(),
+                std::ptr::null(),
+                std::ptr::null(),
+            );
+            assert!(!r3.is_null());
+            let s3 = CStr::from_ptr(r3).to_str().unwrap();
+            assert!(s3.contains("\"success\":false"));
+            narr_mobile_free_string(r3);
+
+            // Null pointer into narr_mobile_create_snapshot
+            let r4 = narr_mobile_create_snapshot(
+                std::ptr::null(),
+                std::ptr::null(),
+                std::ptr::null(),
+                std::ptr::null(),
+            );
+            assert!(!r4.is_null());
+            let s4 = CStr::from_ptr(r4).to_str().unwrap();
+            assert!(s4.contains("\"success\":false"));
+            narr_mobile_free_string(r4);
+
+            // Freeing null pointer must be safe no-op
+            narr_mobile_free_string(std::ptr::null_mut());
+        }
+    }
+
+    #[test]
+    fn test_mobile_bridge_embedded_null_sanitization() {
+        let resp = MobileResponse::ok("텍스트에 \0 널바이트가 포함된 경우");
+        let ptr = to_c_json(resp);
+        assert!(!ptr.is_null());
+        unsafe {
+            let s = CStr::from_ptr(ptr).to_str().unwrap();
+            assert!(s.contains("\"success\":true"));
+            assert!(s.contains("\\u0000"));
+            narr_mobile_free_string(ptr);
+        }
     }
 }

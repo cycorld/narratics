@@ -443,7 +443,7 @@ pub const LANDING_HTML: &str = r##"<!DOCTYPE html>
 
     .download-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 20px;
       margin-bottom: 40px;
     }
@@ -457,6 +457,33 @@ pub const LANDING_HTML: &str = r##"<!DOCTYPE html>
       flex-direction: column;
       justify-content: space-between;
       position: relative;
+    }
+
+    .download-card-highlight {
+      border: 1px solid var(--text);
+    }
+
+    .platform-status-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+      font-family: var(--font-mono);
+      letter-spacing: -0.02em;
+    }
+
+    .badge-ready {
+      background: var(--bg-subtle);
+      border: 1px solid var(--text);
+      color: var(--text);
+    }
+
+    .badge-pending {
+      background: transparent;
+      border: 1px dashed var(--border);
+      color: var(--text-muted);
     }
 
     .download-platform-header {
@@ -826,33 +853,65 @@ pub const LANDING_HTML: &str = r##"<!DOCTYPE html>
       </div>
 
       <div class="download-grid">
-        <!-- Windows -->
-        <div class="download-card">
+        <!-- Linux (Official Standalone AOT Release) -->
+        <div class="download-card download-card-highlight">
           <div>
             <div class="download-platform-header">
               <div class="download-platform-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="18" x2="8" y2="22"/><line x1="16" y1="18" x2="16" y2="22"/><line x1="2" y1="8" x2="6" y2="8"/><line x1="2" y1="16" x2="6" y2="16"/><line x1="18" y1="8" x2="22" y2="8"/><line x1="18" y1="16" x2="22" y2="16"/></svg>
               </div>
               <div>
-                <div class="download-platform-name">Windows</div>
-                <div class="download-platform-target">x64 / ARM64</div>
+                <div class="download-platform-name">Linux (x86_64)</div>
+                <div class="download-platform-target">AOT Standalone 7.3 MB</div>
+                <div class="platform-status-badge badge-ready">공식 릴리즈 배포 중</div>
               </div>
             </div>
 
             <ul class="download-specs">
               <li><span>버전</span> <span>v0.1.0</span></li>
-              <li><span>형식</span> <span>.exe (NSIS Setup)</span></li>
-              <li><span>요구사양</span> <span>Windows 10 / 11</span></li>
+              <li><span>형식</span> <span>.AppImage (무설치 단일파일)</span></li>
+              <li><span>요구사양</span> <span>glibc 2.31+ (Ubuntu/Fedora/Arch)</span></li>
             </ul>
 
-            <div class="hash-row" data-hash="dbcd8d39a2af2b369e15d82bac01c6f91858787cb377581b1a5d42c2ec466dac">
-              <code>SHA-256: dbcd8d39...</code>
+            <div class="hash-row" data-hash="8b58eacaf9ea3fb756d7a3cf43d127646461c6870bb122fe7f653bbd1871c857">
+              <code>SHA-256: 8b58eaca...</code>
               <span class="hash-copy-btn">복사</span>
             </div>
           </div>
 
-          <a href="/releases/windows/Narratics-Setup-0.1.0.exe" class="btn btn-primary" download>
-            Windows용 설치파일 (.exe)
+          <a href="/releases/linux/Narratics-0.1.0-x86_64.AppImage" class="btn btn-primary" download>
+            Linux AppImage 받기 (7.3 MB)
+          </a>
+        </div>
+
+        <!-- Web Studio (PWA / Cloud Sync) -->
+        <div class="download-card download-card-highlight">
+          <div>
+            <div class="download-platform-header">
+              <div class="download-platform-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <div>
+                <div class="download-platform-name">Web Studio</div>
+                <div class="download-platform-target">Chrome, Safari, Edge, Firefox</div>
+                <div class="platform-status-badge badge-ready">설치 불필요 즉시 실행</div>
+              </div>
+            </div>
+
+            <ul class="download-specs">
+              <li><span>버전</span> <span>v0.1.0 Production</span></li>
+              <li><span>형식</span> <span>PWA / WebAssembly</span></li>
+              <li><span>기능</span> <span>SQLite WAL + Typst 실시간 PDF</span></li>
+            </ul>
+
+            <div class="hash-row" style="cursor: default;">
+              <code>Engine: Yrs CRDT + WASM AOT</code>
+              <span class="hash-copy-btn" style="opacity: 0.6;">Ready</span>
+            </div>
+          </div>
+
+          <a href="/app" class="btn btn-primary">
+            웹 스튜디오 바로 열기
           </a>
         </div>
 
@@ -866,27 +925,59 @@ pub const LANDING_HTML: &str = r##"<!DOCTYPE html>
               <div>
                 <div class="download-platform-name">macOS</div>
                 <div class="download-platform-target">Apple Silicon & Intel</div>
+                <div class="platform-status-badge badge-pending">CI 빌드 파이프라인 연동 중</div>
               </div>
             </div>
 
             <ul class="download-specs">
-              <li><span>버전</span> <span>v0.1.0</span></li>
+              <li><span>버전</span> <span>v0.1.0 RC</span></li>
               <li><span>형식</span> <span>.dmg (Universal)</span></li>
-              <li><span>요구사양</span> <span>macOS 12 Monterey+</span></li>
+              <li><span>상태</span> <span>웹 스튜디오에서 전 기능 지원</span></li>
             </ul>
 
-            <div class="hash-row" data-hash="91227c87305a0265f755a2a3ef7f366e11c22fc6d3dd01a9b2e0d8ff910dad72">
-              <code>SHA-256: 91227c87...</code>
-              <span class="hash-copy-btn">복사</span>
+            <div class="hash-row" style="cursor: default;">
+              <code>Tauri v2 + Metal Backend</code>
+              <span class="hash-copy-btn" style="opacity: 0.6;">v0.1.0</span>
             </div>
           </div>
 
-          <a href="/releases/macos/Narratics-0.1.0-universal.dmg" class="btn btn-primary" download>
-            macOS용 디스크 (.dmg)
+          <a href="/app" class="btn">
+            웹 스튜디오로 먼저 쓰기
           </a>
         </div>
 
-        <!-- iOS -->
+        <!-- Windows -->
+        <div class="download-card">
+          <div>
+            <div class="download-platform-header">
+              <div class="download-platform-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>
+              </div>
+              <div>
+                <div class="download-platform-name">Windows</div>
+                <div class="download-platform-target">x64 / ARM64</div>
+                <div class="platform-status-badge badge-pending">CI 빌드 파이프라인 연동 중</div>
+              </div>
+            </div>
+
+            <ul class="download-specs">
+              <li><span>버전</span> <span>v0.1.0 RC</span></li>
+              <li><span>형식</span> <span>.exe (NSIS Installer)</span></li>
+              <li><span>상태</span> <span>웹 스튜디오에서 전 기능 지원</span></li>
+            </ul>
+
+            <div class="hash-row" style="cursor: default;">
+              <code>Tauri v2 + WebView2</code>
+              <span class="hash-copy-btn" style="opacity: 0.6;">v0.1.0</span>
+            </div>
+          </div>
+
+          <a href="/app" class="btn">
+            웹 스튜디오로 먼저 쓰기
+          </a>
+        </div>
+
+        <!-- Mobile (iOS & Android) -->
         <div class="download-card">
           <div>
             <div class="download-platform-header">
@@ -894,65 +985,36 @@ pub const LANDING_HTML: &str = r##"<!DOCTYPE html>
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
               </div>
               <div>
-                <div class="download-platform-name">iOS / iPadOS</div>
-                <div class="download-platform-target">iPhone & iPad</div>
+                <div class="download-platform-name">iOS & Android</div>
+                <div class="download-platform-target">iPhone, iPad, Galaxy Tab</div>
+                <div class="platform-status-badge badge-pending">UniFFI 코어 검증 완료</div>
               </div>
             </div>
 
             <ul class="download-specs">
-              <li><span>버전</span> <span>v0.1.0</span></li>
-              <li><span>형식</span> <span>.ipa / TestFlight</span></li>
-              <li><span>요구사양</span> <span>iOS 16.0 이상</span></li>
+              <li><span>버전</span> <span>v0.1.0 FFI Beta</span></li>
+              <li><span>형식</span> <span>Swift / Kotlin Native</span></li>
+              <li><span>상태</span> <span>모바일 PWA 완벽 지원</span></li>
             </ul>
 
-            <div class="hash-row" data-hash="1c9f2357b441e653533b5d50d0b119a198921a670db9d52cbda9e3ce2a5d0dc2">
-              <code>SHA-256: 1c9f2357...</code>
-              <span class="hash-copy-btn">복사</span>
+            <div class="hash-row" style="cursor: default;">
+              <code>UniFFI C-ABI Engine Verified</code>
+              <span class="hash-copy-btn" style="opacity: 0.6;">v0.1.0</span>
             </div>
           </div>
 
-          <a href="/releases/ios/Narratics-v0.1.0.ipa" class="btn btn-primary" download>
-            iOS 패키지 다운로드 (.ipa)
-          </a>
-        </div>
-
-        <!-- Android -->
-        <div class="download-card">
-          <div>
-            <div class="download-platform-header">
-              <div class="download-platform-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="16" rx="2"/><circle cx="12" cy="7" r="0.5"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              </div>
-              <div>
-                <div class="download-platform-name">Android</div>
-                <div class="download-platform-target">Phone & Tablet</div>
-              </div>
-            </div>
-
-            <ul class="download-specs">
-              <li><span>버전</span> <span>v0.1.0</span></li>
-              <li><span>형식</span> <span>.apk (Standalone)</span></li>
-              <li><span>요구사양</span> <span>Android 10.0+</span></li>
-            </ul>
-
-            <div class="hash-row" data-hash="f824c93f102450499d598cdcc7219f23bec16e32e55c8e81c94361146255d52f">
-              <code>SHA-256: f824c93f...</code>
-              <span class="hash-copy-btn">복사</span>
-            </div>
-          </div>
-
-          <a href="/releases/android/Narratics-v0.1.0-release.apk" class="btn btn-primary" download>
-            Android 패키지 (.apk)
+          <a href="/app" class="btn">
+            모바일 웹 스튜디오 쓰기
           </a>
         </div>
       </div>
 
-      <!-- Linux / CLI Note -->
+      <!-- Architecture & Cross Platform Note -->
       <div class="linux-note-box">
         <div>
-          <strong>Linux & 개발자 도구:</strong> 
-          x86_64 AppImage가 준비되어 있으며, Cargo를 통한 네이티브 빌드 설치도 지원합니다.
-          <code>cargo install narratics-cli</code>
+          <strong>진실된 멀티플랫폼 아키텍처:</strong> 
+          Linux x86_64 AppImage(7.3MB)는 로컬 컴파일된 단일 AOT 바이너리로 즉시 실행할 수 있습니다. Windows, macOS, 모바일 빌드는 Rust 코어 크로스 컴파일 파이프라인에서 자동 빌드 준비 중이며, 모든 플랫폼에서 동일한 SQLite WAL(`.narr`)과 CRDT를 지원하는 브라우저 PWA 스튜디오(/app)를 즉시 이용하실 수 있습니다.
+          <code>cargo install --git https://github.com/cycorld/narratics narratics-cli</code>
         </div>
         <a href="/releases/linux/Narratics-0.1.0-x86_64.AppImage" class="btn" download>
           Linux AppImage 받기
