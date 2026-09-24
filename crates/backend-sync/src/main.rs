@@ -15,7 +15,7 @@ use axum::{
 };
 use futures::{SinkExt, StreamExt};
 use narratics_engine_core::{
-    container::{LoreRecord, NarrContainer, SnapshotRecord},
+    container::{LoreRecord, SnapshotRecord},
     text_engine::SceneEngine,
 };
 use serde::Deserialize;
@@ -34,13 +34,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         )
         .init();
 
+    let projects_dir = std::env::var("NARRATICS_PROJECTS_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| PathBuf::from("/home/cycorld/projects/narratics/data/projects"));
+
     let project_path = std::env::var("NARRATICS_CONTAINER_PATH")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| PathBuf::from("workspace.narr"));
+        .unwrap_or_else(|_| projects_dir.join("moonlight_chronicles.narr"));
 
-    info!("Opening Narratics container at: {:?}", project_path);
-    let container = NarrContainer::open(&project_path)?;
-    let app_state = AppState::new(container)?;
+    info!("Initializing Narratics AppState with projects_dir: {:?}, initial_file: {:?}", projects_dir, project_path);
+    let app_state = AppState::new(projects_dir, project_path)?;
 
     let app = Router::new()
         .route("/health", get(health_handler))
@@ -52,12 +55,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .route("/releases/{platform}/{filename}", get(download_release_handler))
         .route("/docs/{filename}", get(docs_handler))
         .route("/api/state", get(state_handler))
+        .route("/api/projects", get(list_projects_handler))
+        .route("/api/projects/new", post(create_project_handler))
+        .route("/api/projects/switch", post(switch_project_handler))
+        .route("/api/projects/delete", post(delete_project_handler))
+        .route("/api/projects/meta", post(update_project_meta_handler))
         .route("/api/scenes/{id}", get(get_scene_handler).post(post_scene_handler))
         .route("/api/scenes/{id}/status", post(scene_status_handler))
         .route("/api/scenes/{id}/restore", post(restore_scene_handler))
         .route("/api/binder/move", post(move_node_handler))
+        .route("/api/binder/rename", post(rename_node_handler))
+        .route("/api/binder/delete", post(delete_node_handler))
+        .route("/api/binder/reorder", post(reorder_node_handler))
         .route("/api/lore", post(save_lore_handler))
+        .route("/api/lore/delete", post(delete_lore_handler))
         .route("/api/snapshots", post(save_snapshot_handler))
+        .route("/api/export/{format}", get(export_manuscript_handler))
         .route("/ws", get(ws_handler))
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
@@ -358,10 +371,34 @@ async fn move_node_handler(
     Ok(Json(serde_json::json!({ "success": true })))
 }
 
+#[derive(Deserialize)]
+struct SaveLoreReq {
+    pub id: String,
+    pub category: String,
+    pub name: String,
+    pub aliases: Vec<String>,
+    pub content: String,
+    pub updated_at: Option<i64>,
+}
+
 async fn save_lore_handler(
     State(state): State<AppState>,
-    Json(lore): Json<LoreRecord>,
+    Json(payload): Json<SaveLoreReq>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs() as i64;
+
+    let lore = LoreRecord {
+        id: payload.id,
+        category: payload.category,
+        name: payload.name,
+        aliases: payload.aliases,
+        content: payload.content,
+        updated_at: payload.updated_at.unwrap_or(now),
+    };
+
     {
         let conn = state.container.lock().await;
         if let Err(e) = conn.save_lore(&lore) {
@@ -598,5 +635,151 @@ async fn handle_socket(socket: WebSocket, state: AppState) {
     tokio::select! {
         _ = (&mut send_task) => recv_task.abort(),
         _ = (&mut recv_task) => send_task.abort(),
+    }
+}
+
+#[derive(Deserialize)]
+struct SwitchProjectPayload {
+    id: String,
+}
+
+#[derive(Deserialize)]
+struct DeleteProjectPayload {
+    id: String,
+}
+
+#[derive(Deserialize)]
+struct RenameNodePayload {
+    id: String,
+    title: String,
+}
+
+#[derive(Deserialize)]
+struct DeleteNodePayload {
+    id: String,
+}
+
+#[derive(Deserialize)]
+struct ReorderNodePayload {
+    id: String,
+    direction: String,
+}
+
+#[derive(Deserialize)]
+struct DeleteLorePayload {
+    id: String,
+}
+
+async fn list_projects_handler(
+    State(state): State<AppState>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    match state.list_projects().await {
+        Ok(list) => {
+            let active_id = state.active_project_id.read().await.clone();
+            Ok(Json(serde_json::json!({
+                "active_id": active_id,
+                "projects": list
+            })))
+        }
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    }
+}
+
+async fn create_project_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<app_state::CreateProjectReq>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    match state.create_project(payload).await {
+        Ok(id) => Ok(Json(serde_json::json!({ "status": "ok", "project_id": id }))),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
+    }
+}
+
+async fn switch_project_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<SwitchProjectPayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    match state.switch_project(&payload.id).await {
+        Ok(_) => Ok(Json(serde_json::json!({ "status": "ok", "project_id": payload.id }))),
+        Err(e) => Err((StatusCode::NOT_FOUND, e.to_string())),
+    }
+}
+
+async fn delete_project_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<DeleteProjectPayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    match state.delete_project(&payload.id).await {
+        Ok(_) => Ok(Json(serde_json::json!({ "status": "ok" }))),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
+    }
+}
+
+async fn update_project_meta_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<app_state::UpdateProjectMetaReq>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    match state.update_project_meta(payload).await {
+        Ok(_) => Ok(Json(serde_json::json!({ "status": "ok" }))),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
+    }
+}
+
+async fn rename_node_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<RenameNodePayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    match state.rename_binder_node(&payload.id, &payload.title).await {
+        Ok(_) => Ok(Json(serde_json::json!({ "status": "ok" }))),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
+    }
+}
+
+async fn delete_node_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<DeleteNodePayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    match state.delete_binder_node(&payload.id).await {
+        Ok(_) => Ok(Json(serde_json::json!({ "status": "ok" }))),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
+    }
+}
+
+async fn reorder_node_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<ReorderNodePayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    match state.reorder_binder_node(&payload.id, &payload.direction).await {
+        Ok(_) => Ok(Json(serde_json::json!({ "status": "ok" }))),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
+    }
+}
+
+async fn delete_lore_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<DeleteLorePayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    match state.delete_lore(&payload.id).await {
+        Ok(_) => Ok(Json(serde_json::json!({ "status": "ok" }))),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
+    }
+}
+
+async fn export_manuscript_handler(
+    State(state): State<AppState>,
+    Path(format): Path<String>,
+) -> Result<impl IntoResponse, (StatusCode, String)> {
+    match state.export_manuscript(&format).await {
+        Ok((filename, content_type, bytes)) => {
+            let headers = [
+                (axum::http::header::CONTENT_TYPE, content_type),
+                (
+                    axum::http::header::CONTENT_DISPOSITION,
+                    format!("attachment; filename=\"{}\"", filename),
+                ),
+            ];
+            Ok((headers, bytes))
+        }
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
     }
 }

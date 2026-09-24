@@ -132,6 +132,72 @@ impl TreeCRDT {
         (nodes, rejected_ops)
     }
 
+    /// Checks if a node reaches root without encountering 'trash'
+    pub fn is_under_root(&self, node_id: &str, parent_map: &HashMap<String, String>) -> bool {
+        let mut curr = node_id;
+        let mut visited = std::collections::HashSet::new();
+        while let Some(parent) = parent_map.get(curr) {
+            if parent == "trash" || parent.is_empty() {
+                return false;
+            }
+            if parent == &self.root_id {
+                return true;
+            }
+            if !visited.insert(parent.as_str()) {
+                return false;
+            }
+            curr = parent;
+        }
+        false
+    }
+
+    /// Materializes only active nodes under root, excluding trashed subtrees
+    pub fn materialize_active(&self) -> (HashMap<String, NodeInfo>, Vec<MoveOp>) {
+        let mut parent_map: HashMap<String, String> = HashMap::new();
+        let mut all_nodes = HashMap::new();
+        let mut rejected_ops = Vec::new();
+
+        all_nodes.insert(
+            self.root_id.clone(),
+            NodeInfo {
+                id: self.root_id.clone(),
+                parent: None,
+                rank: "0".to_string(),
+                title: "Root".to_string(),
+            },
+        );
+
+        for op in &self.ops {
+            if op.child == self.root_id || op.child == op.parent {
+                rejected_ops.push(op.clone());
+                continue;
+            }
+            if self.is_ancestor(&parent_map, &op.child, &op.parent) {
+                rejected_ops.push(op.clone());
+                continue;
+            }
+            parent_map.insert(op.child.clone(), op.parent.clone());
+            all_nodes.insert(
+                op.child.clone(),
+                NodeInfo {
+                    id: op.child.clone(),
+                    parent: Some(op.parent.clone()),
+                    rank: op.rank.clone(),
+                    title: op.title.clone(),
+                },
+            );
+        }
+
+        let mut active_nodes = HashMap::new();
+        for (id, node) in all_nodes {
+            if id == self.root_id || self.is_under_root(&id, &parent_map) {
+                active_nodes.insert(id, node);
+            }
+        }
+
+        (active_nodes, rejected_ops)
+    }
+
     fn is_ancestor(
         &self,
         parent_map: &HashMap<String, String>,

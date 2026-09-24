@@ -196,7 +196,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       gap: 8px;
     }
 
-    button.btn {
+    button.btn, a.btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -209,29 +209,35 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       font-weight: 500;
       cursor: pointer;
       user-select: none;
+      text-decoration: none;
       transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
 
-    button.btn:hover {
+    button.btn:hover, a.btn:hover {
       background: var(--bg-hover);
       border-color: var(--border-strong);
+      color: var(--text);
+      text-decoration: none;
     }
 
-    button.btn:active {
+    button.btn:active, a.btn:active {
       background: var(--bg-active);
     }
 
-    button.btn-primary {
+    button.btn-primary, a.btn-primary {
       background: #111111;
       color: #ffffff;
       border-color: #111111;
       font-weight: 600;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      text-decoration: none;
     }
 
-    button.btn-primary:hover {
+    button.btn-primary:hover, a.btn-primary:hover {
       background: #262626;
       border-color: #262626;
+      color: #ffffff;
+      text-decoration: none;
     }
 
     button.btn-active {
@@ -979,12 +985,15 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(2px);
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
       display: none;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: 1000;
+    }
+    .modal-overlay.active {
+      display: flex !important;
     }
 
     .modal-box {
@@ -1170,30 +1179,36 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     }
 
     /* Raycast Buttons */
-    [data-theme="dark"] button.btn {
+    [data-theme="dark"] button.btn, [data-theme="dark"] a.btn {
       background: rgba(255, 255, 255, 0.045);
       border: 1px solid rgba(255, 255, 255, 0.085);
       color: #ededed;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      text-decoration: none;
     }
 
-    [data-theme="dark"] button.btn:hover {
+    [data-theme="dark"] button.btn:hover, [data-theme="dark"] a.btn:hover {
       background: rgba(255, 255, 255, 0.085);
       border-color: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      text-decoration: none;
     }
 
-    [data-theme="dark"] button.btn-primary {
+    [data-theme="dark"] button.btn-primary, [data-theme="dark"] a.btn-primary {
       background: #ffffff;
       border-color: #ffffff;
       color: #0b0c0e;
       font-weight: 600;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+      text-decoration: none;
     }
 
-    [data-theme="dark"] button.btn-primary:hover {
+    [data-theme="dark"] button.btn-primary:hover, [data-theme="dark"] a.btn-primary:hover {
       background: #e5e5e5;
       border-color: #e5e5e5;
+      color: #0b0c0e;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+      text-decoration: none;
     }
 
     [data-theme="dark"] button.btn-active {
@@ -1341,6 +1356,154 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     body.zen-focus-active .word-count-bar:hover {
       opacity: 1;
     }
+
+    /* Library & Project Management */
+    .library-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding: 2px;
+    }
+    .library-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .library-card:hover {
+      border-color: var(--border-strong);
+      background: var(--bg-hover);
+    }
+    .library-card.active {
+      border-color: var(--accent);
+      background: var(--bg-active);
+    }
+    .library-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .library-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+    .library-card-author {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .library-card-genre {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .progress-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+    .library-card-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    .library-card-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Tree Item Action Icons */
+    .tree-item-tools {
+      display: flex;
+      gap: 2px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      margin-left: auto;
+    }
+    .tree-item:hover .tree-item-tools {
+      opacity: 1;
+    }
+    .tree-item-btn {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 2px 5px;
+      font-size: 11px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s;
+    }
+    .tree-item-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .tree-item-btn.danger:hover {
+      background: var(--danger-light);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* Active Scene Lore Badges */
+    .active-lore-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .active-lore-pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .active-lore-pill:hover {
+      border-color: var(--accent);
+      background: var(--bg-hover);
+    }
+
   </style>
 </head>
 <body>
@@ -1351,23 +1514,42 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       <button class="icon-btn" id="btn-toggle-binder" title="바인더 사이드바 토글 (Cmd/Ctrl+B)">
         <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
       </button>
-      <a href="/" class="brand-logo">
+      <a href="/" class="brand-logo" title="Narratics 홈으로 이동">
         <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
         <span>Narratics</span>
       </a>
-      <span class="brand-badge">Local-First</span>
-      
-      <div class="project-title-container">
-        <input type="text" class="project-title-input" id="project-meta-title" value="달빛 아래의 크로니클.narr" title="클릭하여 작품 제목 변경" />
-      </div>
+
+      <!-- Library (내 서재) Button -->
+      <button class="btn" id="btn-open-library" title="내 서재: 전체 서사 작품 목록 및 전환">
+        <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        <span>내 서재</span>
+      </button>
+
+      <!-- New Book (+ 새 책 쓰기) Button -->
+      <button class="btn btn-primary" id="btn-open-new-book" title="새로운 서사 작품 집필 시작">
+        <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span>새 책 쓰기</span>
+      </button>
+
+      <!-- Active Book Meta Trigger -->
+      <button class="btn" id="btn-edit-book-meta" title="작품 정보(제목, 작가, 장르, 집필 목표) 수정">
+        <span id="active-book-title" style="font-weight: 600;">달빛 아래의 크로니클</span>
+        <span class="badge" id="active-book-genre" style="margin-left: 6px; font-size: 11px;">다크 판타지</span>
+      </button>
 
       <div class="storage-status-pill" title="모든 수정사항이 SQLite WAL 저널에 즉시 원자적으로 영구 기록됩니다.">
         <div class="status-dot" id="sync-status-dot"></div>
         <span id="sync-status-text">로컬 안전 저장됨</span>
       </div>
+      <input type="hidden" id="project-meta-title" value="workspace.narr" />
     </div>
 
     <div class="top-actions">
+      <!-- Total Progress Pill -->
+      <div id="total-progress-pill" style="display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; background: var(--bg-subtle); border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted);" title="전체 원고 집필 진척도">
+        <span id="total-progress-text">전체 0자 / 목표 100,000자 (0%)</span>
+      </div>
+
       <!-- Zen Focus Mode -->
       <button class="btn" id="btn-zen-mode" title="방해 없는 집중 집필 모드 (단축키: Esc 또는 F11)">
         <svg class="icon" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
@@ -1664,6 +1846,130 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     </div>
   </div>
 
+
+  <!-- New Book Modal -->
+  <div class="modal-overlay" id="modal-new-book">
+    <div class="modal-box" style="width: 540px;">
+      <div class="modal-title">새로운 서사 집필 시작 (새 책 쓰기)</div>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+        단일 .narr (SQLite WAL) 로컬 컨테이너 파일로 즉시 생성되며, 100% 오프라인으로 보존됩니다.
+      </p>
+      <div class="form-group">
+        <label>작품 제목 *</label>
+        <input type="text" id="new-book-title" placeholder="예: 심해의 파수꾼" required />
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label>필명 / 작가 *</label>
+          <input type="text" id="new-book-author" placeholder="예: 최용철" value="최용철" />
+        </div>
+        <div class="form-group">
+          <label>장르</label>
+          <select id="new-book-genre">
+            <option value="다크 판타지">다크 판타지</option>
+            <option value="SF / 사이버펑크">SF / 사이버펑크</option>
+            <option value="미스터리 / 스릴러">미스터리 / 스릴러</option>
+            <option value="현대소설 / 드라마">현대소설 / 드라마</option>
+            <option value="웹소설 (회빙환/전문직)">웹소설 (회빙환/전문직)</option>
+            <option value="로맨스 판타지">로맨스 판타지</option>
+            <option value="수필 / 에세이 / 논픽션">수필 / 에세이 / 논픽션</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>목표 글자 수 (자)</label>
+        <input type="number" id="new-book-target-words" value="100000" step="10000" />
+      </div>
+      <div class="form-group">
+        <label>시놉시스 / 기획 의도</label>
+        <textarea id="new-book-synopsis" rows="3" placeholder="작품의 핵심 세계관, 갈등 축, 로그라인을 간략히 메모하세요..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>초기 구조 템플릿</label>
+        <select id="new-book-template">
+          <option value="three_act">고전 3막 8장 구조 (기승전결 완벽 프레임워크)</option>
+          <option value="webnovel">웹소설 10화 연재 템플릿 (프롤로그 및 초반 흡입력 빌드업)</option>
+          <option value="blank">빈 원고 (1개 장, 1개 씬으로 직접 구조화)</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="btn-close-new-book">취소</button>
+        <button class="btn btn-primary" id="btn-submit-new-book">새 책 집필 시작</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Library (내 서재) Modal -->
+  <div class="modal-overlay" id="modal-library">
+    <div class="modal-box" style="width: 720px; max-width: 95%;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div class="modal-title" style="margin-bottom: 0;">내 서재 (Library)</div>
+        <button class="btn btn-primary" id="btn-library-new-book">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          <span>새 책 쓰기</span>
+        </button>
+      </div>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">
+        로컬 머신에 보존된 전체 서사 프로젝트(.narr) 목록입니다. 클릭하여 즉시 집필 컨텍스트를 전환합니다.
+      </p>
+      <div class="library-grid" id="library-projects-list">
+        <!-- Dynamic Cards -->
+      </div>
+      <div class="modal-actions" style="margin-top: 16px;">
+        <button class="btn" id="btn-close-library">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Book Meta Modal -->
+  <div class="modal-overlay" id="modal-book-meta">
+    <div class="modal-box" style="width: 520px;">
+      <div class="modal-title">작품 메타데이터 및 집필 목표 설정</div>
+      <div class="form-group">
+        <label>작품 제목</label>
+        <input type="text" id="meta-book-title" />
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label>필명 / 작가</label>
+          <input type="text" id="meta-book-author" />
+        </div>
+        <div class="form-group">
+          <label>장르</label>
+          <input type="text" id="meta-book-genre" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>목표 글자 수 (자)</label>
+        <input type="number" id="meta-book-target-words" step="5000" />
+      </div>
+      <div class="form-group">
+        <label>시놉시스 / 기획 의도</label>
+        <textarea id="meta-book-synopsis" rows="4"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="btn-close-book-meta">취소</button>
+        <button class="btn btn-primary" id="btn-save-book-meta">설정 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Node Rename Modal -->
+  <div class="modal-overlay" id="modal-rename-node">
+    <div class="modal-box" style="width: 440px;">
+      <div class="modal-title" id="rename-node-modal-title">항목 이름 변경</div>
+      <input type="hidden" id="rename-node-id" />
+      <div class="form-group">
+        <label>새 이름 / 제목</label>
+        <input type="text" id="rename-node-input" placeholder="새로운 제목 입력..." required />
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="btn-close-rename-node">취소</button>
+        <button class="btn btn-primary" id="btn-save-rename-node">변경 완료</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal for Exporting Manuscript -->
   <div class="modal-overlay" id="export-modal">
     <div class="modal-box" style="width: 520px;">
@@ -1671,12 +1977,15 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">작품 전체 원고를 원하는 표준 출판 포맷으로 즉시 추출합니다.</p>
       
       <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
-        <div style="border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-subtle);">
           <div>
-            <div style="font-weight:600; font-size:13px;">표준 웹소설 텍스트 (.txt)</div>
-            <div style="font-size:11px; color:var(--text-muted);">문피아, 카카오페이지, 노벨피아 연재 업로드용 화수별 텍스트</div>
+            <div style="font-weight:600; font-size:13px;">Typst 출판 규격 PDF (A5 소설 판형)</div>
+            <div style="font-size:11px; color:var(--text-muted);">속표지, 시놉시스, 장·절 자동 조판 및 실시간 벡터 렌더링</div>
           </div>
-          <button class="btn" id="btn-export-txt">TXT 다운로드</button>
+          <a href="/api/export/pdf" class="btn btn-primary" download style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>PDF 다운로드</span>
+          </a>
         </div>
 
         <div style="border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
@@ -1684,23 +1993,40 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
             <div style="font-weight:600; font-size:13px;">통합 마크다운 원고 (.md)</div>
             <div style="font-size:11px; color:var(--text-muted);">전체 챕터 및 씬이 구조화된 단일 Markdown 문서</div>
           </div>
-          <button class="btn" id="btn-export-md">MD 다운로드</button>
+          <a href="/api/export/markdown" class="btn" download style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>MD 다운로드</span>
+          </a>
         </div>
 
         <div style="border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-weight:600; font-size:13px;">Typst 단행본 조판 파일 (.typ)</div>
-            <div style="font-size:11px; color:var(--text-muted);">국판/신국판 판형에 맞춘 출판용 벡터 조판 소스</div>
+            <div style="font-weight:600; font-size:13px;">표준 웹소설 텍스트 (.txt)</div>
+            <div style="font-size:11px; color:var(--text-muted);">문피아, 카카오페이지, 노벨피아 연재 업로드용 화수별 텍스트</div>
           </div>
-          <button class="btn" id="btn-export-typ">Typst 다운로드</button>
+          <a href="/api/export/txt" class="btn" download style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>TXT 다운로드</span>
+          </a>
         </div>
 
         <div style="border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-weight:600; font-size:13px;">인쇄 및 PDF 내보내기</div>
+            <div style="font-weight:600; font-size:13px;">Typst 단행본 조판 원본 (.typ)</div>
+            <div style="font-size:11px; color:var(--text-muted);">CLI 직접 컴파일 및 인쇄소 CTP 출력용 소스</div>
+          </div>
+          <a href="/api/export/typst" class="btn" download style="text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Typst 소스</span>
+          </a>
+        </div>
+
+        <div style="border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-weight:600; font-size:13px;">인쇄 및 브라우저 PDF 열기</div>
             <div style="font-size:11px; color:var(--text-muted);">원고지 양식 및 A4 여백 맞춤 브라우저 인쇄</div>
           </div>
-          <button class="btn" id="btn-export-print">인쇄/PDF 열기</button>
+          <button class="btn" id="btn-export-print">인쇄 열기</button>
         </div>
       </div>
 
@@ -1844,12 +2170,28 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     // Render Master
     function renderAll() {
       projectTitleEl.value = `${state.title}.narr`;
+      const titleEl = document.getElementById("active-book-title");
+      if (titleEl) titleEl.textContent = state.title || "새 작품";
+      const genreEl = document.getElementById("active-book-genre");
+      if (genreEl) genreEl.textContent = state.genre || "소설";
+      updateTotalProgress();
       renderBinder();
       loadActiveScene();
       renderLore();
       renderSnapshots();
       updateSplitReferenceDropdown();
       updateBinderFooter();
+      scanActiveSceneLore();
+    }
+
+    function updateTotalProgress() {
+      const totalWords = Object.values(state.scenes || {}).reduce((acc, s) => acc + (s.word_count || 0), 0);
+      const targetWords = state.target_words || 100000;
+      const pct = Math.min(100, Math.round((totalWords / targetWords) * 100));
+      const totalEl = document.getElementById("total-progress-text");
+      if (totalEl) {
+        totalEl.textContent = `전체 ${totalWords.toLocaleString()}자 / 목표 ${targetWords.toLocaleString()}자 (${pct}%)`;
+      }
     }
 
     // Render Binder
@@ -1882,12 +2224,38 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
           <svg class="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
           <span class="tree-item-title">${escapeHtml(folder.title)}</span>
           <span class="tree-item-count">${childScenes.length}화 · ${folderChars.toLocaleString()}자</span>
+          <div class="tree-item-tools">
+            <button class="tree-item-btn btn-node-up" title="장 위로 이동">▲</button>
+            <button class="tree-item-btn btn-node-down" title="장 아래로 이동">▼</button>
+            <button class="tree-item-btn btn-node-rename" title="이름 변경">✎</button>
+            <button class="tree-item-btn danger btn-node-delete" title="장 삭제">✕</button>
+          </div>
         `;
 
         const childContainer = document.createElement("div");
         childContainer.className = "folder-children";
 
-        folderHeader.onclick = () => {
+        folderHeader.onclick = (e) => {
+          if (e.target.closest(".btn-node-up")) {
+            e.stopPropagation();
+            reorderNode(folder.id, "up");
+            return;
+          }
+          if (e.target.closest(".btn-node-down")) {
+            e.stopPropagation();
+            reorderNode(folder.id, "down");
+            return;
+          }
+          if (e.target.closest(".btn-node-rename")) {
+            e.stopPropagation();
+            openRenameModal(folder.id, folder.title);
+            return;
+          }
+          if (e.target.closest(".btn-node-delete")) {
+            e.stopPropagation();
+            deleteNode(folder.id, folder.title);
+            return;
+          }
           folderHeader.classList.toggle("collapsed");
           childContainer.style.display = folderHeader.classList.contains("collapsed") ? "none" : "block";
         };
@@ -1910,8 +2278,10 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
             <span class="status-pill-badge status-${status}" title="진행 상태 변경">${status}</span>
             <span class="tree-item-count">${(scene.word_count || 0).toLocaleString()}자</span>
             <div class="tree-item-tools">
-              <button class="tree-item-btn btn-reorder-up" title="위로 이동">▲</button>
-              <button class="tree-item-btn btn-reorder-down" title="아래로 이동">▼</button>
+              <button class="tree-item-btn btn-node-up" title="위로 이동">▲</button>
+              <button class="tree-item-btn btn-node-down" title="아래로 이동">▼</button>
+              <button class="tree-item-btn btn-node-rename" title="이름 변경">✎</button>
+              <button class="tree-item-btn danger btn-node-delete" title="씬 삭제">✕</button>
             </div>
           `;
 
@@ -1920,12 +2290,24 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
               cycleSceneStatus(scene.id, status);
               return;
             }
-            if (e.target.closest(".btn-reorder-up")) {
-              moveSceneRank(scene.id, folder.id, -1);
+            if (e.target.closest(".btn-node-up")) {
+              e.stopPropagation();
+              reorderNode(scene.id, "up");
               return;
             }
-            if (e.target.closest(".btn-reorder-down")) {
-              moveSceneRank(scene.id, folder.id, 1);
+            if (e.target.closest(".btn-node-down")) {
+              e.stopPropagation();
+              reorderNode(scene.id, "down");
+              return;
+            }
+            if (e.target.closest(".btn-node-rename")) {
+              e.stopPropagation();
+              openRenameModal(scene.id, scene.title);
+              return;
+            }
+            if (e.target.closest(".btn-node-delete")) {
+              e.stopPropagation();
+              deleteNode(scene.id, scene.title);
               return;
             }
             selectScene(scene.id);
@@ -1954,10 +2336,36 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
           <span class="tree-item-title">${escapeHtml(scene.title)}</span>
           <span class="status-pill-badge status-${status}">${status}</span>
           <span class="tree-item-count">${(scene.word_count || 0).toLocaleString()}자</span>
+          <div class="tree-item-tools">
+            <button class="tree-item-btn btn-node-up" title="위로 이동">▲</button>
+            <button class="tree-item-btn btn-node-down" title="아래로 이동">▼</button>
+            <button class="tree-item-btn btn-node-rename" title="이름 변경">✎</button>
+            <button class="tree-item-btn danger btn-node-delete" title="씬 삭제">✕</button>
+          </div>
         `;
         sceneDiv.onclick = (e) => {
           if (e.target.closest(".status-pill-badge")) {
             cycleSceneStatus(scene.id, status);
+            return;
+          }
+          if (e.target.closest(".btn-node-up")) {
+            e.stopPropagation();
+            reorderNode(scene.id, "up");
+            return;
+          }
+          if (e.target.closest(".btn-node-down")) {
+            e.stopPropagation();
+            reorderNode(scene.id, "down");
+            return;
+          }
+          if (e.target.closest(".btn-node-rename")) {
+            e.stopPropagation();
+            openRenameModal(scene.id, scene.title);
+            return;
+          }
+          if (e.target.closest(".btn-node-delete")) {
+            e.stopPropagation();
+            deleteNode(scene.id, scene.title);
             return;
           }
           selectScene(scene.id);
@@ -2451,12 +2859,22 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
         card.innerHTML = `
           <div class="lore-card-header">
             <span class="lore-name">${escapeHtml(lore.name)}</span>
-            <span class="lore-category-tag">${escapeHtml(lore.category)}</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="lore-category-tag">${escapeHtml(lore.category)}</span>
+              <button class="tree-item-btn danger btn-lore-delete" title="설정 삭제" style="padding:1px 5px;">✕</button>
+            </div>
           </div>
           ${aliasesHtml ? `<div class="lore-aliases">${aliasesHtml}</div>` : ""}
           <p class="lore-content-text">${escapeHtml(lore.content)}</p>
         `;
-        card.onclick = () => openLoreDetail(lore);
+        card.onclick = (e) => {
+          if (e.target.closest(".btn-lore-delete")) {
+            e.stopPropagation();
+            deleteLore(lore.id, lore.name);
+            return;
+          }
+          openLoreDetail(lore);
+        };
         loreListContainer.appendChild(card);
       });
     }
@@ -2732,15 +3150,15 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     });
 
     // Export Handlers
-    document.getElementById("btn-export-txt").addEventListener("click", () => {
-      let fullTxt = `[${state.title}]\n저자: ${state.author}\n\n`;
-      state.binder.filter(b => !b.is_folder).forEach((b, i) => {
-        fullTxt += `=== ${i + 1}화. ${b.title} ===\n\n${state.scenes[b.id]?.text || ""}\n\n\n`;
+    document.getElementById("btn-export-txt")?.addEventListener("click", () => {
+      let fullTxt = `${state.title}\n저자: ${state.author}\n\n`;
+      state.binder.filter(b => !b.is_folder).forEach(b => {
+        fullTxt += `\n[${b.title}]\n\n${state.scenes[b.id]?.text || ""}\n\n`;
       });
       downloadFile(`${state.title}_연재원고.txt`, fullTxt, "text/plain;charset=utf-8");
     });
 
-    document.getElementById("btn-export-md").addEventListener("click", () => {
+    document.getElementById("btn-export-md")?.addEventListener("click", () => {
       let fullMd = `# ${state.title}\n\n> 저자: ${state.author}\n> 생성: Narratics 서사 스튜디오\n\n`;
       state.binder.filter(b => !b.is_folder).forEach(b => {
         fullMd += `\n## ${b.title}\n\n${state.scenes[b.id]?.text || ""}\n\n---\n`;
@@ -2748,7 +3166,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       downloadFile(`${state.title}_통합원고.md`, fullMd, "text/markdown;charset=utf-8");
     });
 
-    document.getElementById("btn-export-typ").addEventListener("click", () => {
+    document.getElementById("btn-export-typ")?.addEventListener("click", () => {
       let fullTyp = `// Narratics Typst Book Template\n#set document(title: "${state.title}", author: "${state.author}")\n#set page(paper: "a5", margin: (x: 2cm, y: 2.5cm))\n#set text(font: "KoPub Batang", size: 10.5pt, lang: "ko")\n#set par(justify: true, leading: 0.9em, first-line-indent: 1em)\n\n#align(center + horizon)[\n  #text(22pt, weight: "bold")[${state.title}]\n  #v(1em)\n  #text(12pt)[${state.author} 지음]\n]\n#pagebreak()\n\n`;
       state.binder.filter(b => !b.is_folder).forEach(b => {
         fullTyp += `= ${b.title}\n\n${state.scenes[b.id]?.text || ""}\n\n#pagebreak()\n\n`;
@@ -2756,7 +3174,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       downloadFile(`${state.title}_출판조판.typ`, fullTyp, "text/plain;charset=utf-8");
     });
 
-    document.getElementById("btn-export-print").addEventListener("click", () => {
+    document.getElementById("btn-export-print")?.addEventListener("click", () => {
       window.print();
     });
 
@@ -2812,6 +3230,335 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     // Startup
     connectWs();
     fetchState();
+
+    // ==========================================
+    // Project Lifecycle & Multi-Book Handlers
+    // ==========================================
+    async function loadProjectsList() {
+      try {
+        const res = await fetch("/api/projects");
+        const data = await res.json();
+        const listEl = document.getElementById("library-projects-list");
+        if (!listEl) return;
+        listEl.innerHTML = "";
+        
+        data.projects.forEach(p => {
+          const card = document.createElement("div");
+          card.className = `library-card ${p.is_active ? "active" : ""}`;
+          const pct = Math.min(100, Math.round((p.total_words / (p.target_words || 100000)) * 100));
+          const dateStr = new Date(p.updated_at * 1000).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+          card.innerHTML = `
+            <div class="library-card-header">
+              <div>
+                <div class="library-card-title">${escapeHtml(p.title)}</div>
+                <div class="library-card-author">${escapeHtml(p.author || "작자 미상")}</div>
+              </div>
+              <span class="library-card-genre">${escapeHtml(p.genre || "소설")}</span>
+            </div>
+            ${p.synopsis ? `<p style="font-size:11px; color:var(--text-muted); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${escapeHtml(p.synopsis)}</p>` : ""}
+            <div>
+              <div class="library-card-stats">
+                <span>${p.total_words.toLocaleString()}자 / ${(p.target_words || 100000).toLocaleString()}자 (${pct}%)</span>
+                <span>${p.scenes_count}개 씬</span>
+              </div>
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-fill" style="width: ${pct}%;"></div>
+              </div>
+            </div>
+            <div class="library-card-actions">
+              <span style="font-size:10px; color:var(--text-subtle);">${dateStr}</span>
+              <div style="display:flex; gap:6px;">
+                ${p.is_active 
+                  ? `<span class="badge" style="background:var(--accent); color:var(--bg); padding:3px 8px; font-weight:700;">집필 중</span>` 
+                  : `<button class="btn btn-switch-proj" data-id="${p.id}" style="padding:3px 8px; font-size:11px;">전환</button>`
+                }
+                ${!p.is_active 
+                  ? `<button class="btn btn-delete-proj" data-id="${p.id}" data-title="${escapeHtml(p.title)}" style="padding:3px 8px; font-size:11px; color:var(--danger);">삭제</button>` 
+                  : ""
+                }
+              </div>
+            </div>
+          `;
+
+          card.onclick = (e) => {
+            if (e.target.closest(".btn-delete-proj")) {
+              const btn = e.target.closest(".btn-delete-proj");
+              deleteProject(btn.dataset.id, btn.dataset.title);
+              return;
+            }
+            if (e.target.closest(".btn-switch-proj") || !p.is_active) {
+              switchProject(p.id);
+            }
+          };
+
+          listEl.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Failed to load projects list:", err);
+      }
+    }
+
+    async function switchProject(projectId) {
+      try {
+        const res = await fetch("/api/projects/switch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: projectId })
+        });
+        if (res.ok) {
+          document.getElementById("modal-library").classList.remove("active");
+          await fetchState();
+        } else {
+          alert("작품 전환에 실패했습니다.");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function deleteProject(projectId, title) {
+      if (!confirm(`정말로 '${title}' 작품을 영구 삭제하시겠습니까?\n(.narr 컨테이너 파일이 완전히 삭제됩니다)`)) {
+        return;
+      }
+      try {
+        const res = await fetch("/api/projects/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: projectId })
+        });
+        if (res.ok) {
+          loadProjectsList();
+        } else {
+          alert("활성 작품이거나 삭제 중 오류가 발생했습니다.");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function createNewBook() {
+      const title = document.getElementById("new-book-title").value.trim();
+      if (!title) {
+        alert("작품 제목을 입력해 주세요.");
+        return;
+      }
+      const author = document.getElementById("new-book-author").value.trim() || "최용철";
+      const genre = document.getElementById("new-book-genre").value;
+      const target_words = parseInt(document.getElementById("new-book-target-words").value, 10) || 100000;
+      const synopsis = document.getElementById("new-book-synopsis").value.trim();
+      const template = document.getElementById("new-book-template").value;
+
+      try {
+        const res = await fetch("/api/projects/new", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title,
+            author,
+            genre,
+            target_words,
+            synopsis,
+            template
+          })
+        });
+
+        if (res.ok) {
+          document.getElementById("modal-new-book").classList.remove("active");
+          document.getElementById("modal-library").classList.remove("active");
+          await fetchState();
+        } else {
+          const err = await res.text();
+          alert("새 작품 생성 실패: " + err);
+        }
+      } catch (e) {
+        console.error(e);
+        alert("네트워크 통신 오류");
+      }
+    }
+
+    function openBookMetaModal() {
+      document.getElementById("meta-book-title").value = state.title || "";
+      document.getElementById("meta-book-author").value = state.author || "";
+      document.getElementById("meta-book-genre").value = state.genre || "다크 판타지";
+      document.getElementById("meta-book-target-words").value = state.target_words || 100000;
+      document.getElementById("meta-book-synopsis").value = state.synopsis || "";
+      document.getElementById("modal-book-meta").classList.add("active");
+    }
+
+    async function saveBookMeta() {
+      const title = document.getElementById("meta-book-title").value.trim();
+      const author = document.getElementById("meta-book-author").value.trim();
+      const genre = document.getElementById("meta-book-genre").value.trim();
+      const target_words = parseInt(document.getElementById("meta-book-target-words").value, 10) || 100000;
+      const synopsis = document.getElementById("meta-book-synopsis").value.trim();
+
+      try {
+        const res = await fetch("/api/projects/meta", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: title || undefined,
+            author: author || undefined,
+            genre: genre || undefined,
+            target_words,
+            synopsis: synopsis || undefined
+          })
+        });
+        if (res.ok) {
+          document.getElementById("modal-book-meta").classList.remove("active");
+          await fetchState();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openRenameModal(nodeId, currentTitle) {
+      document.getElementById("rename-node-id").value = nodeId;
+      document.getElementById("rename-node-input").value = currentTitle;
+      document.getElementById("modal-rename-node").classList.add("active");
+      setTimeout(() => document.getElementById("rename-node-input").focus(), 50);
+    }
+
+    async function submitRenameNode() {
+      const id = document.getElementById("rename-node-id").value;
+      const title = document.getElementById("rename-node-input").value.trim();
+      if (!title) return;
+
+      try {
+        const res = await fetch("/api/binder/rename", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, title })
+        });
+        if (res.ok) {
+          document.getElementById("modal-rename-node").classList.remove("active");
+          await fetchState();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function deleteNode(nodeId, title) {
+      if (!confirm(`'${title}' 항목을 삭제하시겠습니까?\n(해당 씬과 원고가 영구 삭제됩니다)`)) {
+        return;
+      }
+      try {
+        const res = await fetch("/api/binder/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: nodeId })
+        });
+        if (res.ok) {
+          await fetchState();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function reorderNode(nodeId, direction) {
+      try {
+        const res = await fetch("/api/binder/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: nodeId, direction })
+        });
+        if (res.ok) {
+          await fetchState();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function deleteLore(loreId, name) {
+      if (!confirm(`세계관 설정 '${name}' 항목을 삭제하시겠습니까?`)) return;
+      try {
+        const res = await fetch("/api/lore/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: loreId })
+        });
+        if (res.ok) {
+          await fetchState();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function scanActiveSceneLore() {
+      const activeText = (state.scenes[state.active_scene_id]?.text || "").toLowerCase();
+      const detected = (state.lore || []).filter(l => {
+        if (activeText.includes(l.name.toLowerCase())) return true;
+        return (l.aliases || []).some(a => activeText.includes(a.toLowerCase()));
+      });
+
+      let bar = document.getElementById("active-scene-lore-bar");
+      if (!bar) {
+        const inspectorBody = document.querySelector(".inspector-body");
+        if (inspectorBody) {
+          const section = document.createElement("div");
+          section.className = "inspector-section";
+          section.innerHTML = `
+            <div class="section-title">현재 장면에 등장하는 인물 및 설정</div>
+            <div class="active-lore-bar" id="active-scene-lore-bar"></div>
+          `;
+          inspectorBody.insertBefore(section, inspectorBody.firstChild);
+          bar = document.getElementById("active-scene-lore-bar");
+        }
+      }
+
+      if (bar) {
+        if (detected.length === 0) {
+          bar.innerHTML = '<span style="font-size:11px; color:var(--text-subtle);">감지된 인물/설정 없음</span>';
+        } else {
+          bar.innerHTML = detected.map(d => `<span class="active-lore-pill" data-id="${d.id}"><strong>${escapeHtml(d.name)}</strong> (${d.category})</span>`).join("");
+          bar.querySelectorAll(".active-lore-pill").forEach(pill => {
+            pill.onclick = () => {
+              const lore = state.lore.find(l => l.id === pill.dataset.id);
+              if (lore) openLoreDetail(lore);
+            };
+          });
+        }
+      }
+    }
+
+    // Modal Triggers
+    document.getElementById("btn-open-library").addEventListener("click", () => {
+      document.getElementById("modal-library").classList.add("active");
+      loadProjectsList();
+    });
+    document.getElementById("btn-close-library").addEventListener("click", () => {
+      document.getElementById("modal-library").classList.remove("active");
+    });
+    document.getElementById("btn-open-new-book").addEventListener("click", () => {
+      document.getElementById("modal-new-book").classList.add("active");
+      setTimeout(() => document.getElementById("new-book-title").focus(), 50);
+    });
+    document.getElementById("btn-library-new-book").addEventListener("click", () => {
+      document.getElementById("modal-new-book").classList.add("active");
+      setTimeout(() => document.getElementById("new-book-title").focus(), 50);
+    });
+    document.getElementById("btn-close-new-book").addEventListener("click", () => {
+      document.getElementById("modal-new-book").classList.remove("active");
+    });
+    document.getElementById("btn-submit-new-book").addEventListener("click", createNewBook);
+
+    document.getElementById("btn-edit-book-meta").addEventListener("click", openBookMetaModal);
+    document.getElementById("btn-close-book-meta").addEventListener("click", () => {
+      document.getElementById("modal-book-meta").classList.remove("active");
+    });
+    document.getElementById("btn-save-book-meta").addEventListener("click", saveBookMeta);
+
+    document.getElementById("btn-close-rename-node").addEventListener("click", () => {
+      document.getElementById("modal-rename-node").classList.remove("active");
+    });
+    document.getElementById("btn-save-rename-node").addEventListener("click", submitRenameNode);
+
   </script>
 </body>
 </html>

@@ -372,6 +372,17 @@ impl NarrContainer {
         Ok(list)
     }
 
+    pub fn delete_lore(&self, id: &str) -> Result<(), ContainerError> {
+        self.conn.execute("DELETE FROM lore WHERE id = ?1", rusqlite::params![id])?;
+        Ok(())
+    }
+
+    pub fn delete_scene(&self, id: &str) -> Result<(), ContainerError> {
+        self.conn.execute("DELETE FROM scenes WHERE id = ?1", rusqlite::params![id])?;
+        self.conn.execute("DELETE FROM snapshots WHERE target_id = ?1", rusqlite::params![id])?;
+        Ok(())
+    }
+
     pub fn save_snapshot(&self, snapshot: &SnapshotRecord) -> Result<(), ContainerError> {
         let now = if snapshot.created_at > 0 {
             snapshot.created_at
