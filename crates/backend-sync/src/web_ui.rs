@@ -663,6 +663,35 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     /* Typewriter mode: keeps center scrolling */
     textarea.manuscript-editor.typewriter-mode {
       scroll-behavior: smooth;
+      transition: padding-top 0.15s ease-out, padding-bottom 0.15s ease-out;
+    }
+
+    .typewriter-guide-line {
+      display: none;
+      position: absolute;
+      top: 45%;
+      left: -12px;
+      right: -12px;
+      height: 1px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.22);
+      pointer-events: none;
+      z-index: 10;
+    }
+    [data-theme="light"] .typewriter-guide-line {
+      border-top: 1px dashed rgba(0, 0, 0, 0.22);
+    }
+    .typewriter-guide-line .typewriter-guide-badge {
+      position: absolute;
+      right: 8px;
+      top: -10px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      background: var(--bg-card);
+      padding: 1px 6px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      letter-spacing: 0.5px;
     }
 
     /* Scrivenings Continuous View */
@@ -2165,6 +2194,9 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       <div class="editor-container" id="editor-container">
         <!-- Main Editor Paper -->
         <div class="editor-paper" id="editor-paper-main">
+          <div class="typewriter-guide-line" id="typewriter-guide-line">
+            <span class="typewriter-guide-badge">타자기 기준선 (45%)</span>
+          </div>
           <textarea id="manuscript-text-editor" class="manuscript-editor" placeholder="이곳에 서사를 펼치세요...&#10;&#10;* 팁: 세계관 인물이나 설정을 삽입하려면 '@' 키를 입력하세요.&#10;* 방해 없는 집필을 원하시면 F11(Zen) 또는 F9(타자기)를 누르세요."></textarea>
           <div id="scrivenings-container" class="scrivenings-view"></div>
         </div>
@@ -2960,6 +2992,11 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       editorTextarea.value = scene.text || "";
       updateWordCount(scene.text || "");
 
+      if (isTypewriterMode) {
+        updateTypewriterLayout();
+        scrollTypewriter(false);
+      }
+
       if (isScriveningsMode) {
         renderScrivenings();
       }
@@ -3011,7 +3048,7 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
 
       // Typewriter scrolling
       if (isTypewriterMode) {
-        scrollTypewriter();
+        scrollTypewriter(false);
       }
 
       clearTimeout(debounceTimer);
@@ -3027,19 +3064,19 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     editorTextarea.addEventListener("compositionend", () => {
       isImeComposing = false;
       if (isTypewriterMode) {
-        requestAnimationFrame(scrollTypewriter);
+        requestAnimationFrame(() => scrollTypewriter(false));
       }
     });
     editorTextarea.addEventListener("keyup", (e) => {
       if (isTypewriterMode && !isImeComposing) {
         if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "PageUp", "PageDown", "Home", "End"].includes(e.key)) {
-          scrollTypewriter();
+          scrollTypewriter(true);
         }
       }
     });
     editorTextarea.addEventListener("click", () => {
       if (isTypewriterMode) {
-        scrollTypewriter();
+        scrollTypewriter(true);
       }
     });
 
@@ -3068,18 +3105,80 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
       }
     }
 
-    // Typewriter centering
-    function scrollTypewriter() {
-      if (isImeComposing) return;
+    // Typewriter centering & eye-level focus logic
+    let typewriterMirror = null;
+    function getTypewriterMirror(textarea) {
+      if (!typewriterMirror) {
+        typewriterMirror = document.createElement("div");
+        typewriterMirror.id = "typewriter-cursor-mirror";
+        typewriterMirror.style.position = "absolute";
+        typewriterMirror.style.top = "-9999px";
+        typewriterMirror.style.left = "-9999px";
+        typewriterMirror.style.visibility = "hidden";
+        typewriterMirror.style.pointerEvents = "none";
+        typewriterMirror.style.whiteSpace = "pre-wrap";
+        typewriterMirror.style.wordBreak = "break-all";
+        document.body.appendChild(typewriterMirror);
+      }
+      const style = getComputedStyle(textarea);
+      typewriterMirror.style.width = textarea.clientWidth + "px";
+      typewriterMirror.style.fontFamily = style.fontFamily;
+      typewriterMirror.style.fontSize = style.fontSize;
+      typewriterMirror.style.fontWeight = style.fontWeight;
+      typewriterMirror.style.lineHeight = style.lineHeight;
+      typewriterMirror.style.letterSpacing = style.letterSpacing;
+      typewriterMirror.style.paddingTop = textarea.style.paddingTop || style.paddingTop;
+      typewriterMirror.style.paddingBottom = textarea.style.paddingBottom || style.paddingBottom;
+      typewriterMirror.style.paddingLeft = style.paddingLeft;
+      typewriterMirror.style.paddingRight = style.paddingRight;
+      typewriterMirror.style.boxSizing = style.boxSizing;
+      return typewriterMirror;
+    }
+
+    function updateTypewriterLayout() {
       const textarea = editorTextarea;
-      const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 32;
-      const cursorPos = textarea.selectionStart;
-      const textBeforeCursor = textarea.value.substring(0, cursorPos);
-      const lines = textBeforeCursor.split("\n").length;
-      const cursorY = lines * lineHeight;
-      const container = document.getElementById("editor-container");
-      const targetScroll = cursorY - container.clientHeight * 0.45;
-      container.scrollTop = Math.max(0, targetScroll);
+      const guide = document.getElementById("typewriter-guide-line");
+      if (!textarea) return;
+      if (isTypewriterMode) {
+        const clientH = textarea.clientHeight || 500;
+        const padTop = Math.floor(clientH * 0.45);
+        const padBottom = Math.floor(clientH * 0.55);
+        textarea.style.paddingTop = padTop + "px";
+        textarea.style.paddingBottom = padBottom + "px";
+        textarea.classList.add("typewriter-mode");
+        if (guide) guide.style.display = "block";
+      } else {
+        textarea.style.paddingTop = "0px";
+        textarea.style.paddingBottom = "240px";
+        textarea.classList.remove("typewriter-mode");
+        if (guide) guide.style.display = "none";
+      }
+    }
+
+    function scrollTypewriter(smooth = false) {
+      if (!isTypewriterMode || isImeComposing) return;
+      const textarea = editorTextarea;
+      if (!textarea) return;
+      
+      const clientH = textarea.clientHeight;
+      if (!clientH) return;
+      const padTop = Math.floor(clientH * 0.45);
+
+      const pos = textarea.selectionStart || 0;
+      const mirror = getTypewriterMirror(textarea);
+      mirror.textContent = textarea.value.substring(0, pos);
+      const marker = document.createElement("span");
+      marker.textContent = "\u200b";
+      mirror.appendChild(marker);
+
+      const cursorY = marker.offsetTop;
+      const targetScroll = Math.max(0, cursorY - padTop);
+      
+      if (smooth) {
+        textarea.scrollTo({ top: targetScroll, behavior: "smooth" });
+      } else {
+        textarea.scrollTop = targetScroll;
+      }
     }
 
     // @-Mention Autocomplete Handling
@@ -3303,9 +3402,18 @@ pub const INDEX_HTML: &str = r#"<!DOCTYPE html>
     const btnTypewriter = document.getElementById("btn-typewriter-mode");
     btnTypewriter.addEventListener("click", () => {
       isTypewriterMode = !isTypewriterMode;
-      editorTextarea.classList.toggle("typewriter-mode", isTypewriterMode);
       btnTypewriter.classList.toggle("btn-active", isTypewriterMode);
-      if (isTypewriterMode) scrollTypewriter();
+      updateTypewriterLayout();
+      if (isTypewriterMode) {
+        scrollTypewriter(true);
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (isTypewriterMode) {
+        updateTypewriterLayout();
+        scrollTypewriter(false);
+      }
     });
 
     // ==========================================
