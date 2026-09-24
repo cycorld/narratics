@@ -2198,6 +2198,17 @@ pub const INDEX_HTML: &str = r###"<!DOCTYPE html>
     }
 
   </style>
+  <!-- Rybbit Privacy-First Analytics -->
+  <script
+    src="https://rybbit.cycorld.com/api/script.js"
+    data-site-id="ef76184d2b16"
+    data-track-errors="true"
+    data-track-outbound="true"
+    data-track-url-params="true"
+    data-track-button-clicks="true"
+    data-track-copy="true"
+    data-track-form-interactions="true"
+    defer></script>
 </head>
 <body>
 
