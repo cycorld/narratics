@@ -30,12 +30,13 @@ def run_tests():
     print("Narratics E2E Interactive UX Verification Gate")
     print("==================================================")
     
-    # 0. Open page
+    # 0. Open page in desktop viewport
+    subprocess.run(["agent-browser", "set", "viewport", "1280", "800"], check=True)
     subprocess.run(["agent-browser", "open", "http://127.0.0.1:3901/app"], check=True)
     time.sleep(1.0)
     
     tests_passed = 0
-    total_tests = 5
+    total_tests = 6
 
     # Test 1: @ Mention Autocomplete Keyboard Navigation
     print("\n[1/5] Testing @ Mention Autocomplete Keyboard Navigation...")
@@ -94,6 +95,7 @@ def run_tests():
         ta.selectionStart = text.length;
         ta.selectionEnd = text.length;
         ta.dispatchEvent(new Event('input'));
+        ta.dispatchEvent(new KeyboardEvent('keyup', { key: 'ArrowDown' }));
         
         await new Promise(r => setTimeout(r, 400));
         
@@ -215,6 +217,57 @@ def run_tests():
     assert res5.get("isVisible") is True, f"Toast failed to appear: {res5}"
     assert res5.get("undoTriggered") is True, f"Toast undo action callback not fired: {res5}"
     print("  ✓ Toast notification and undo callback execution verified.")
+    tests_passed += 1
+
+    # Test 6: Mobile Ergonomics & Drawer Navigation (390x844)
+    print("\n[6/6] Testing Mobile Ergonomics & Drawer Navigation (390x844)...")
+    subprocess.run(["agent-browser", "set", "viewport", "390", "844"], check=True)
+    time.sleep(0.5)
+
+    script_6 = """(() => {
+        const quickBar = document.getElementById('mobile-quick-bar');
+        const binder = document.getElementById('binder-panel');
+        const inspector = document.getElementById('inspector-panel');
+        const backdrop = document.getElementById('mobile-backdrop');
+        const mBtnBinder = document.getElementById('m-btn-binder');
+        const mBtnInspector = document.getElementById('m-btn-inspector');
+        
+        const isQuickBarVisible = quickBar && window.getComputedStyle(quickBar).display !== 'none';
+        
+        // 1. Open Binder Drawer via quick button
+        mBtnBinder.click();
+        const binderOpened = binder.classList.contains('mobile-open') && backdrop.classList.contains('visible');
+        
+        // 2. Close via backdrop click
+        backdrop.click();
+        const binderClosed = !binder.classList.contains('mobile-open') && !backdrop.classList.contains('visible');
+        
+        // 3. Open Inspector Drawer via quick button
+        mBtnInspector.click();
+        const inspectorOpened = inspector.classList.contains('mobile-open') && backdrop.classList.contains('visible');
+        
+        // 4. Close via backdrop click
+        backdrop.click();
+        const inspectorClosed = !inspector.classList.contains('mobile-open') && !backdrop.classList.contains('visible');
+        
+        return {
+            isQuickBarVisible,
+            binderOpened,
+            binderClosed,
+            inspectorOpened,
+            inspectorClosed
+        };
+    })()"""
+    res6 = run_browser_eval(script_6)
+    assert res6.get("isQuickBarVisible") is True, f"Mobile quick bar not visible on 390x844: {res6}"
+    assert res6.get("binderOpened") is True, f"Binder drawer failed to open on mobile: {res6}"
+    assert res6.get("binderClosed") is True, f"Backdrop failed to close binder drawer: {res6}"
+    assert res6.get("inspectorOpened") is True, f"Inspector drawer failed to open on mobile: {res6}"
+    assert res6.get("inspectorClosed") is True, f"Backdrop failed to close inspector drawer: {res6}"
+    
+    # Restore viewport to desktop
+    subprocess.run(["agent-browser", "set", "viewport", "1280", "800"], check=True)
+    print("  ✓ Mobile quick bar visible, drawer overlays & backdrop dismissal 100% verified.")
     tests_passed += 1
 
     print("\n==================================================")

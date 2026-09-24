@@ -2,7 +2,7 @@
 <html lang="ko" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
   <title>Narratics — 로컬 퍼스트 서사 집필 스튜디오</title>
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -662,8 +662,7 @@
 
     /* Typewriter mode: keeps center scrolling */
     textarea.manuscript-editor.typewriter-mode {
-      scroll-behavior: smooth;
-      transition: padding-top 0.15s ease-out, padding-bottom 0.15s ease-out;
+      /* Instant deterministic alignment for typing; smooth scroll handled conditionally in JS */
     }
 
     .typewriter-guide-line {
@@ -1870,6 +1869,213 @@
       display: none;
     }
 
+    /* ========================================================
+       Mobile Responsive & Ergonomic Layout (<= 768px)
+       ======================================================== */
+    @media (max-width: 768px) {
+      .topbar {
+        padding: 0 10px;
+        height: 48px;
+        gap: 6px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .brand-logo span,
+      #btn-open-library span,
+      #btn-open-new-book span,
+      #active-book-genre,
+      #sync-status-text,
+      #total-progress-pill,
+      #btn-open-cmd-palette span,
+      #btn-open-cmd-palette kbd,
+      #btn-zen-mode span,
+      #btn-zen-mode kbd,
+      #btn-typewriter-mode span,
+      #btn-typewriter-mode kbd,
+      #btn-open-typo-menu span,
+      .top-actions kbd {
+        display: none !important;
+      }
+      .brand-section {
+        gap: 6px;
+      }
+      .storage-status-pill {
+        padding: 3px 6px;
+      }
+
+      .app-workspace {
+        position: relative;
+        width: 100vw;
+        height: calc(100vh - 48px);
+        overflow: hidden;
+      }
+
+      aside.binder-panel {
+        position: fixed;
+        top: 48px;
+        bottom: 0;
+        left: 0;
+        width: min(86vw, 320px);
+        z-index: 1000;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        margin-left: 0 !important;
+      }
+      aside.binder-panel.mobile-open {
+        transform: translateX(0);
+      }
+
+      aside.inspector-panel {
+        position: fixed;
+        top: 48px;
+        bottom: 0;
+        right: 0;
+        width: min(88vw, 340px);
+        z-index: 1000;
+        box-shadow: -4px 0 24px rgba(0, 0, 0, 0.45);
+        transform: translateX(100%);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        margin-right: 0 !important;
+      }
+      aside.inspector-panel.mobile-open {
+        transform: translateX(0);
+      }
+
+      .mobile-backdrop {
+        position: fixed;
+        top: 48px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        z-index: 999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .mobile-backdrop.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .studio-panel {
+        width: 100vw;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 50px;
+        min-width: 0;
+      }
+      .studio-header {
+        padding: 8px 10px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
+      .scene-meta-group {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .scene-title-input {
+        width: 100%;
+        font-size: 15px;
+      }
+      .studio-controls {
+        justify-content: flex-end;
+        width: 100%;
+      }
+      #btn-toggle-split, #btn-toggle-scrivenings {
+        display: none !important;
+      }
+
+      .word-count-bar {
+        padding: 6px 10px;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      .stat-pills {
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+      .stat-pill {
+        font-size: 11px;
+        padding: 2px 6px;
+      }
+      .target-bar-wrap {
+        display: none;
+      }
+
+      .editor-container {
+        padding: 0;
+      }
+      .editor-paper {
+        padding: 14px 12px 140px 12px;
+        max-width: 100%;
+      }
+      textarea.manuscript-editor {
+        font-size: 16px !important;
+        line-height: 1.8 !important;
+      }
+
+      .corkboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        padding: 12px !important;
+      }
+
+      .mobile-quick-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 50px;
+        background: var(--bg-sidebar);
+        border-top: 1px solid var(--border);
+        z-index: 500;
+        justify-content: space-around;
+        align-items: center;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .quick-btn {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 10px;
+        cursor: pointer;
+        padding: 4px 0;
+      }
+      .quick-btn:active {
+        background: var(--bg-hover);
+        color: var(--text);
+      }
+      .quick-btn.active {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .quick-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    @media (min-width: 769px) {
+      .mobile-quick-bar, .mobile-backdrop {
+        display: none !important;
+      }
+    }
+
     /* Print Stylesheet: Pure Manuscript Formatting */
     @media print {
       @page {
@@ -2123,6 +2329,9 @@
   <!-- Main 3-Panel Workspace -->
   <div class="app-workspace">
 
+    <!-- Mobile Backdrop for Sidebars -->
+    <div class="mobile-backdrop" id="mobile-backdrop"></div>
+
     <!-- Left: Arc Binder -->
     <aside class="binder-panel" id="binder-panel">
       <div class="binder-header">
@@ -2254,6 +2463,30 @@
           </div>
           <div class="corkboard-grid" id="corkboard-grid"></div>
         </div>
+      </div>
+
+      <!-- Mobile Bottom Quick Bar (<= 768px) -->
+      <div class="mobile-quick-bar" id="mobile-quick-bar">
+        <button class="quick-btn" id="m-btn-binder" title="목차 열기">
+          <svg class="icon" viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          <span>목차</span>
+        </button>
+        <button class="quick-btn" id="m-btn-mention" title="@ 로어 멘션">
+          <span style="font-weight:700; font-size:15px; line-height:1;">@</span>
+          <span>멘션</span>
+        </button>
+        <button class="quick-btn" id="m-btn-typewriter" title="타자기 45%">
+          <svg class="icon" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+          <span>타자기</span>
+        </button>
+        <button class="quick-btn" id="m-btn-corkboard" title="코르크보드">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          <span>개요</span>
+        </button>
+        <button class="quick-btn" id="m-btn-inspector" title="세계관/스냅샷">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+          <span>세계관</span>
+        </button>
       </div>
     </main>
 
@@ -3075,6 +3308,9 @@
     });
 
     function selectScene(sceneId) {
+      if (window.innerWidth <= 768) {
+        if (typeof closeMobileDrawers === "function") closeMobileDrawers();
+      }
       const cur = state.binder.find(b => b.id === sceneId);
       if (cur && cur.parent && cur.parent !== "root") {
         state.active_folder_id = cur.parent;
@@ -3260,7 +3496,7 @@
       if (isTypewriterMode) {
         const clientH = textarea.clientHeight || 500;
         const padTop = Math.floor(clientH * 0.45);
-        const padBottom = Math.floor(clientH * 0.55);
+        const padBottom = Math.floor(clientH * 0.85);
         textarea.style.paddingTop = padTop + "px";
         textarea.style.paddingBottom = padBottom + "px";
         textarea.classList.add("typewriter-mode");
@@ -3281,6 +3517,9 @@
       const clientH = textarea.clientHeight;
       if (!clientH) return;
       const padTop = Math.floor(clientH * 0.45);
+      if (textarea.style.paddingTop !== padTop + "px") {
+        updateTypewriterLayout();
+      }
 
       const pos = textarea.selectionStart || 0;
       const mirror = getTypewriterMirror(textarea);
@@ -4208,13 +4447,92 @@
       localStorage.setItem("narratics_theme", currentTheme);
     });
 
-    // Sidebars Toggle
-    document.getElementById("btn-toggle-binder").addEventListener("click", () => {
-      binderPanel.classList.toggle("collapsed");
-    });
-    document.getElementById("btn-toggle-inspector").addEventListener("click", () => {
-      inspectorPanel.classList.toggle("collapsed");
-    });
+    // Sidebars & Mobile Drawer Controls
+    const mobileBackdrop = document.getElementById("mobile-backdrop");
+
+    function closeMobileDrawers() {
+      binderPanel.classList.remove("mobile-open");
+      inspectorPanel.classList.remove("mobile-open");
+      if (mobileBackdrop) mobileBackdrop.classList.remove("visible");
+      const mb = document.getElementById("m-btn-binder");
+      const mi = document.getElementById("m-btn-inspector");
+      if (mb) mb.classList.remove("active");
+      if (mi) mi.classList.remove("active");
+    }
+
+    function toggleMobileBinder() {
+      if (window.innerWidth <= 768) {
+        const isOpen = binderPanel.classList.toggle("mobile-open");
+        inspectorPanel.classList.remove("mobile-open");
+        const mb = document.getElementById("m-btn-binder");
+        const mi = document.getElementById("m-btn-inspector");
+        if (mi) mi.classList.remove("active");
+        if (mb) mb.classList.toggle("active", isOpen);
+        if (mobileBackdrop) mobileBackdrop.classList.toggle("visible", isOpen);
+      } else {
+        binderPanel.classList.toggle("collapsed");
+      }
+    }
+
+    function toggleMobileInspector() {
+      if (window.innerWidth <= 768) {
+        const isOpen = inspectorPanel.classList.toggle("mobile-open");
+        binderPanel.classList.remove("mobile-open");
+        const mb = document.getElementById("m-btn-binder");
+        const mi = document.getElementById("m-btn-inspector");
+        if (mb) mb.classList.remove("active");
+        if (mi) mi.classList.toggle("active", isOpen);
+        if (mobileBackdrop) mobileBackdrop.classList.toggle("visible", isOpen);
+      } else {
+        inspectorPanel.classList.toggle("collapsed");
+      }
+    }
+
+    document.getElementById("btn-toggle-binder").addEventListener("click", toggleMobileBinder);
+    document.getElementById("btn-toggle-inspector").addEventListener("click", toggleMobileInspector);
+    const mBtnBinder = document.getElementById("m-btn-binder");
+    if (mBtnBinder) mBtnBinder.addEventListener("click", toggleMobileBinder);
+    const mBtnInspector = document.getElementById("m-btn-inspector");
+    if (mBtnInspector) mBtnInspector.addEventListener("click", toggleMobileInspector);
+    if (mobileBackdrop) mobileBackdrop.addEventListener("click", closeMobileDrawers);
+
+    // Mobile Quick Bar: Mention trigger
+    const mBtnMention = document.getElementById("m-btn-mention");
+    if (mBtnMention) {
+      mBtnMention.addEventListener("click", () => {
+        closeMobileDrawers();
+        editorTextarea.focus();
+        const pos = editorTextarea.selectionStart;
+        const text = editorTextarea.value;
+        editorTextarea.value = text.slice(0, pos) + "@" + text.slice(pos);
+        editorTextarea.setSelectionRange(pos + 1, pos + 1);
+        editorTextarea.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+    }
+
+    // Mobile Quick Bar: Typewriter toggle
+    const mBtnTypewriter = document.getElementById("m-btn-typewriter");
+    if (mBtnTypewriter) {
+      mBtnTypewriter.addEventListener("click", () => {
+        document.getElementById("btn-typewriter-mode").click();
+        mBtnTypewriter.classList.toggle("active", isTypewriterMode);
+      });
+    }
+
+    // Mobile Quick Bar: Corkboard view toggle
+    const mBtnCorkboard = document.getElementById("m-btn-corkboard");
+    if (mBtnCorkboard) {
+      mBtnCorkboard.addEventListener("click", () => {
+        closeMobileDrawers();
+        if (viewMode === "editor") {
+          document.getElementById("btn-view-corkboard").click();
+          mBtnCorkboard.classList.add("active");
+        } else {
+          document.getElementById("btn-view-editor").click();
+          mBtnCorkboard.classList.remove("active");
+        }
+      });
+    }
 
     // Tab Navigation in Inspector
     document.querySelectorAll(".tab-btn").forEach(btn => {
